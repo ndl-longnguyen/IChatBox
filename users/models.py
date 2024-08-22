@@ -8,11 +8,15 @@ import uuid
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, password=None, **extra_fields):
+    def create_user(self, username, first_name, last_name, password=None):
         if not username:
             raise ValueError("The Username field must be set")
 
-        user = self.model(username=username, **extra_fields)
+        user = self.model(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+        )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -47,3 +51,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
+
+    def save(self, *args, **kwargs):
+        """
+        Custom to set the password and username field
+        """
+        if self.id is None and self.password and not self.is_superuser:
+            self.set_password(self.password)
+        super().save(*args, **kwargs)
