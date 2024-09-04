@@ -15,9 +15,9 @@ class TokenAuthMiddleware:
     async def __call__(self, scope, receive, send):
         close_old_connections()
         try:
-            if token := parse_qs(scope["query_string"].decode("UTF8")).get(
-                "token", None
-            ):
+            query_string = parse_qs(scope["query_string"].decode("UTF8"))
+            token = query_string.get("token", [None])[0]
+            if token:
                 scope["user"] = await self.get_user(token)
         except:
             scope["user"] = AnonymousUser()
