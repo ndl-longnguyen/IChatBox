@@ -1,0 +1,213 @@
+{% extends "includes/master.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row clearfix">
+        <div class="col-lg-12">
+            <div class="card chat-app">
+                {% block chat_sidebar %}
+                <!-- Sidebar for user list -->
+                <div id="plist" class="people-list">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fa fa-search"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Search...">
+                    </div>
+                    <ul class="list-unstyled chat-list mt-2 mb-0">
+                        {% for room in rooms %}
+                            <li class="clearfix">
+                                <a href="{% url 'chat' %}?room={{ room.id }}">
+                                    <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+                                    <div class="about">
+                                        <div class="name">{{ room.participant.name }}</div>
+                                        <div class="status">
+                                            <i class="fa fa-circle offline"></i>
+                                            {{ room.chat_messages.last.created_at|date:"h:i A, d/m/Y" }}
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endblock %}
+
+                {% if room %}
+                    <div class="chat">
+                        {% block chat_header %}
+                        <!-- Chat header -->
+                        <div class="chat-header clearfix">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <a href="javascript:void(0);" data-toggle="modal" data-target="#view_info">
+                                        <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+                                    </a>
+                                    <div class="chat-about">
+                                        <h6 class="m-b-0">{{ room.participant.name }}</h6>
+                                        <small>Last seen: {{ messages.last.created_at|date:"h:i A, d/m/Y" }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 text-right">
+                                    <a href="javascript:void(0);" class="btn btn-outline-secondary"><i class="fa fa-camera"></i></a>
+                                    <a href="javascript:void(0);" class="btn btn-outline-primary"><i class="fa fa-image"></i></a>
+                                    <a href="javascript:void(0);" class="btn btn-outline-info"><i class="fa fa-cogs"></i></a>
+                                    <a href="javascript:void(0);" class="btn btn-outline-warning"><i class="fa fa-question"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endblock %}
+
+                        {% block chat_history %}
+                        <!-- Chat history -->
+                        <div class="chat-history">
+                            <ul class="m-b-0 chat-content">
+                                {% for message in messages %}
+                                    {% if message.sender_type != "USER" %}
+                                    <li class="clearfix">
+                                        <div class="message-data text-right">
+                                            <span class="message-data-time">{{ message.created_at|date:"h:i A, d/m/Y" }}</span>
+                                            <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                                        </div>
+                                        <div class="message other-message float-right">{{ message.content }}</div>
+                                    </li>
+                                    {% else %}
+                                    <li class="clearfix">
+                                        <div class="message-data">
+                                            <span class="message-data-time">{{ message.created_at|date:"h:i A, d/m/Y" }}</span>
+                                        </div>
+                                        <div class="message my-message">{{ message.content }}</div>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                <!-- Chat messages will be dynamically added here -->
+                            </ul>
+                        </div>
+                        {% endblock %}
+
+                        {% block chat_input %}
+                        <!-- Chat input -->
+                        <div class="chat-message clearfix">
+                            <div class="input-group mb-0">
+                                <div class="input-group-prepend send-message">
+                                    <span class="input-group-text"><i class="fa fa-send"></i></span>
+                                </div>
+                                <input type="text" class="form-control ichatbox-input" placeholder="Enter text here...">
+                            </div>
+                        </div>
+                        {% endblock %}
+                    </div>
+                {% else %}
+                    <!-- UI when no chat room is selected -->
+                    <div class="chat">
+                        <div class="text-center p-5">
+                            <h5>Please select a chat room to start messaging.</h5>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+   // Function to extract chat_room_id from the URL
+function getChatRoomId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('room'); // Assumes the room ID is passed as a query parameter
+}
+
+const chat_room_id = getChatRoomId();
+
+// Helper function to format time and date
+function formatTime(date) {
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = (hours % 12) || 12;
+    const formattedTime = `${formattedHours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
+    const year = date.getFullYear();
+
+    const formattedDate = `${day}/${month}/${year}`;
+    return `${formattedTime}, ${formattedDate}`;
+}
+
+// Function to get the current date and time in the desired format
+function getCurrentDateTime() {
+    return formatTime(new Date());
+}
+
+// Function to scroll to the bottom of the chat history
+function scrollToBottom() {
+    const chatHistory = document.querySelector('.chat-history');
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+scrollToBottom()
+
+// Ensure chat_room_id is present
+if (chat_room_id) {
+    // Establish WebSocket connection
+    const chatSocket = new WebSocket(
+        `ws://127.0.0.1:8002/ws/admin/chat/?token={{ user.token }}&username={{ user.first_name }}{{ user.last_name }}&room=${chat_room_id}`
+    );
+
+    // Handle incoming messages
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        const messages = document.querySelector('.chat-content');
+        const currentTime = getCurrentDateTime();
+
+        // Append incoming message to the chat history
+        messages.innerHTML += `
+            <li class="clearfix">
+                <div class="message-data text-right">
+                    <span class="message-data-time">${currentTime}</span>
+                    <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                </div>
+                <div class="message other-message float-right">${data.message}</div>
+            </li>`;
+
+        // Scroll to the bottom
+        scrollToBottom();
+    };
+
+    // Handle sending messages
+    document.querySelector('.send-message').onclick = function () {
+        const input = document.querySelector('.ichatbox-input');
+        const message = input.value;
+        const messages = document.querySelector('.chat-content');
+        const currentTime = getCurrentDateTime();
+
+        // Append sent message to the chat history
+        messages.innerHTML += `
+            <li class="clearfix">
+                <div class="message-data">
+                    <span class="message-data-time">${currentTime}</span>
+                </div>
+                <div class="message my-message">${message}</div>
+            </li>`;
+
+        // Scroll to the bottom
+        scrollToBottom();
+
+        // Send message via WebSocket
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            "username": "{{ user.first_name }}{{ user.last_name }}",
+            "chat_room_id": chat_room_id
+        }));
+
+        // Clear input field
+        input.value = '';
+    };
+} else {
+    console.error('Chat room ID not found.');
+}
+
+</script>
+
+{% endblock content %}

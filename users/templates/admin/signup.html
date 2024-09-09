@@ -1,0 +1,23 @@
+{% extends "includes/master.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-lg-5 col-md-7 col-sm-9">
+        <div class="card shadow-lg">
+            <div class="card-header text-center bg-primary text-white">
+                <h3 class="mb-0">Register for IChatBox</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary btn-block">Register</button>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{% url 'login' %}" class="text-primary">Already have an account? Sign in here</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

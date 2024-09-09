@@ -1,0 +1,67 @@
+.container {
+    margin: 50px auto;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #343a40;
+}
+
+p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+p strong {
+    color: #007bff;
+    margin-right: 10px;
+}
+
+.navbar-nav .nav-item .nav-link {
+    color: #007bff;
+    font-size: 1rem;
+    padding: 10px 15px;
+}
+
+.navbar-nav .nav-item .nav-link:hover {
+    background-color: #e9ecef;
+    border-radius: 5px;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.navbar-toggler {
+    border-color: #007bff;
+}
+
+.navbar-toggler-icon {
+    color: #007bff;
+}
+
+.navbar-nav .nav-item .nav-link,
+p strong {
+    transition: color 0.3s ease;
+}
+
+p strong:hover {
+    color: #0056b3;
+}
+
+p strong.token {
+    color: #28a745;
+    font-size: 1.2rem;
+}

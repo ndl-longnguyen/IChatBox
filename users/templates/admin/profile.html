@@ -1,0 +1,16 @@
+{% extends "includes/master.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>User Profile</h1>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>First Name:</strong> {{ user.first_name }}</p>
+    <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    {% if user.token %}
+        <p><strong class="token">Token:</strong> {{ user.token }}</p>
+    {% else %}
+        <p><strong>Token:</strong> No token available</p>
+    {% endif %}
+</div>
+{% endblock content %}
