@@ -17,7 +17,6 @@ class UserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
         )
-        user.set_password(password)
         user.save(using=self._db)
         return user
 
@@ -52,10 +51,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.username
 
-    def save(self, *args, **kwargs):
-        """
-        Custom to set the password and username field
-        """
-        if self.id is None and self.password and not self.is_superuser:
-            self.set_password(self.password)
-        super().save(*args, **kwargs)
+
+class Participant(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        User, related_name="participants", on_delete=models.CASCADE
+    )
+    name = models.CharField(max_length=255, null=True, blank=True)
+    device = models.TextField(null=True, blank=True)

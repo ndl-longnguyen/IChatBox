@@ -4,7 +4,7 @@ from django.contrib.auth.models import AnonymousUser
 import json
 from urllib.parse import parse_qs
 from users.models import Participant
-from chat.models import ChatRoom
+from chat.models import ChatMessage, ChatRoom
 
 
 class ChatForUserConsumer(AsyncWebsocketConsumer):
@@ -49,7 +49,9 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
         # Parse the incoming message
         text_data_json = json.loads(text_data)
         message = text_data_json.get("message", "")
-        print("a", text_data_json)
+
+        if message:
+            await self.create_message(message)
 
         # Broadcast the message to the chat room group
         await self.channel_layer.group_send(
@@ -81,6 +83,14 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
             user=self.user, participant=self.participant
         )
         return chat_room
+
+    @database_sync_to_async
+    def create_message(self, message):
+        # Get or create a chat room for the user and participant
+        message = ChatMessage.objects.create(
+            chat_room=self.chat_room, sender_type="PARTICIPANT", content=message
+        )
+        return message
 
 
 class ChatForAdminConsumer(AsyncWebsocketConsumer):
@@ -140,7 +150,9 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json.get("message", "")
         username = text_data_json.get("username", "")
-        print("b", text_data_json)
+        chat_room_id = text_data_json.get("chat_room_id")
+        if message and chat_room_id:
+            await self.create_message(chat_room_id, message)
 
         if username:
             room_group_user_name = f"user_{username}"
@@ -162,3 +174,11 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
             "id", flat=True
         )
         return list(chat_rooms)
+
+    @database_sync_to_async
+    def create_message(self, chat_room_id, message):
+        # Get or create a chat room for the user and participant
+        message = ChatMessage.objects.create(
+            chat_room_id=chat_room_id, sender_type="USER", content=message
+        )
+        return message
