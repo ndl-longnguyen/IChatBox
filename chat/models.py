@@ -11,6 +11,9 @@ class CustomerKey(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="customer_keys"
     )
+    is_active = models.BooleanField(default=True)
+    plan = models.CharField(max_length=20, default="FREE")
+    history_limit = models.PositiveIntegerField(default=50)
     allow_anonymous = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

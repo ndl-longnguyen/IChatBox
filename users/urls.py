@@ -8,4 +8,5 @@ urlpatterns = [
     path("chat/", views.chat_view, name="chat"),
     path("profile/", views.profile_view, name="profile"),
     path("widget-config/", views.widget_config, name="widget_config"),
+    path("widget-history/", views.widget_history, name="widget_history"),
 ]

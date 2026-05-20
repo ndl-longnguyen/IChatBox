@@ -10,16 +10,42 @@ from chat.models import ChatMessage, ChatRoom, CustomerKey
 User = get_user_model()
 
 
+def normalize_visitor_value(value):
+    normalized = (value or "").strip()
+    return normalized or None
+
+
+def has_required_visitor_info(allow_anonymous, username, phone, email):
+    if allow_anonymous:
+        return True
+
+    normalized_username = normalize_visitor_value(username)
+    normalized_phone = normalize_visitor_value(phone)
+    normalized_email = normalize_visitor_value(email)
+
+    return bool(normalized_username and (normalized_phone or normalized_email))
+
+
 class ChatForUserConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         query_string = parse_qs(self.scope["query_string"].decode("utf-8"))
         self.license_key_str = query_string.get("token", [None])[
             0
         ]  # Treat token parameter as license key
-        self.username = query_string.get("username", [None])[0] or "Guest"
-        self.device = query_string.get("device", [None])[0] or self.username
-        self.phone = query_string.get("phone", [None])[0]
-        self.email = query_string.get("email", [None])[0]
+        self.raw_username = normalize_visitor_value(
+            query_string.get("username", [None])[0]
+        )
+        self.username = self.raw_username or "Guest"
+        self.device = (
+            normalize_visitor_value(query_string.get("device", [None])[0])
+            or self.username
+        )
+        self.phone = normalize_visitor_value(
+            query_string.get("phone", [None])[0]
+        )
+        self.email = normalize_visitor_value(
+            query_string.get("email", [None])[0]
+        )
 
         if not self.license_key_str:
             await self.close()
@@ -30,10 +56,22 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
         if not self.customer_key:
             await self.close()
             return
+        if not getattr(self.customer_key, "is_active", True):
+            await self.close(code=4403)
+            return
 
         self.customer_user = await self.get_customer_user(self.customer_key)
         if not self.customer_user:
             await self.close()
+            return
+
+        if not has_required_visitor_info(
+            self.customer_key.allow_anonymous,
+            self.raw_username,
+            self.phone,
+            self.email,
+        ):
+            await self.close(code=4403)
             return
 
         # Get or create the participant and chat room

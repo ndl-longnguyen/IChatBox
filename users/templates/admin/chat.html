@@ -16,6 +16,48 @@
         display: flex;
     }
 
+    .plist-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
+        z-index: 10999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .plist-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .plist-toggle {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #0f172a;
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        margin-right: 10px;
+    }
+
+    @media (max-width: 767px) {
+        .plist-toggle {
+            display: inline-flex;
+        }
+
+        .chat-app {
+            height: calc(100vh - 92px);
+            border-radius: 14px !important;
+        }
+    }
+
     /* Sidebar List Modernization */
     .people-list {
         background-color: #ffffff;
@@ -368,9 +410,10 @@
     }
 </style>
 
-<div class="container">
+<div class="admin-container">
+    <div id="plist-backdrop" class="plist-backdrop"></div>
     <div class="row clearfix">
-        <div class="col-lg-12">
+        <div class="col-lg-12" style="max-height: 85vh;">
             <div class="card chat-app">
                 {% block chat_sidebar %}
                 <!-- Sidebar for user list -->
@@ -407,6 +450,9 @@
                         <div class="chat-header clearfix">
                             <div class="row">
                                 <div class="col-lg-6">
+                                    <button id="plist-toggle" class="plist-toggle" type="button">
+                                        <i class="fa fa-bars"></i> Rooms
+                                    </button>
                                     <a href="javascript:void(0);" data-toggle="modal" data-target="#view_info">
                                         <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
                                     </a>
@@ -526,6 +572,41 @@ scrollToBottom();
 // Establish WebSocket connection (always connect to receive new room notifications)
 const wsUrl = `ws://127.0.0.1:8002/ws/admin/chat/?token={{ user.token }}&username={{ user.first_name }}{{ user.last_name }}` + (chat_room_id ? `&room=${chat_room_id}` : '');
 const chatSocket = new WebSocket(wsUrl);
+
+// Mobile off-canvas rooms sidebar
+const plist = document.getElementById('plist');
+const plistBackdrop = document.getElementById('plist-backdrop');
+const plistToggle = document.getElementById('plist-toggle');
+
+function openPlist() {
+    if (!plist) return;
+    plist.classList.add('open');
+    if (plistBackdrop) plistBackdrop.classList.add('active');
+}
+
+function closePlist() {
+    if (!plist) return;
+    plist.classList.remove('open');
+    if (plistBackdrop) plistBackdrop.classList.remove('active');
+}
+
+if (plistToggle) {
+    plistToggle.addEventListener('click', () => {
+        if (plist && plist.classList.contains('open')) closePlist();
+        else openPlist();
+    });
+}
+
+if (plistBackdrop) {
+    plistBackdrop.addEventListener('click', closePlist);
+}
+
+if (plist) {
+    plist.addEventListener('click', (e) => {
+        const link = e.target && e.target.closest ? e.target.closest('a') : null;
+        if (link) closePlist();
+    });
+}
 
 // Handle incoming messages
 chatSocket.onmessage = function (e) {

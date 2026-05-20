@@ -1,6 +1,6 @@
 body {
     background-color: #f4f7f6;
-    margin-top: 20px;
+    margin-top: 0;
 }
 
 .card {
@@ -213,16 +213,22 @@ body {
 
 @media only screen and (max-width: 767px) {
     .chat-app .people-list {
-        height: 465px;
-        width: 100%;
-        overflow-x: auto;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: min(92vw, 360px);
+        overflow-y: auto;
+        overflow-x: hidden;
         background: #fff;
-        left: -400px;
-        display: none
+        z-index: 11000;
+        transform: translateX(-110%);
+        transition: transform 0.25s ease;
+        display: block
     }
 
     .chat-app .people-list.open {
-        left: 0
+        transform: translateX(0)
     }
 
     .chat-app .chat {
