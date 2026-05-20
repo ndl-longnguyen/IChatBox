@@ -111,13 +111,22 @@ from chat.models import CustomerKey
 def widget_config(request):
     token = request.GET.get("token")
     if not token:
-        return JsonResponse({"error": "Token is required"}, status=400)
+        response = JsonResponse({"error": "Token is required"}, status=400)
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
     try:
         key = CustomerKey.objects.get(key=token)
-        return JsonResponse(
+        response = JsonResponse(
             {
                 "allow_anonymous": key.allow_anonymous,
             }
         )
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
     except (CustomerKey.DoesNotExist, ValueError):
-        return JsonResponse({"error": "Invalid token"}, status=404)
+        response = JsonResponse({"error": "Invalid token"}, status=404)
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
