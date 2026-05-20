@@ -18,6 +18,8 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
         ]  # Treat token parameter as license key
         self.username = query_string.get("username", [None])[0] or "Guest"
         self.device = query_string.get("device", [None])[0] or self.username
+        self.phone = query_string.get("phone", [None])[0]
+        self.email = query_string.get("email", [None])[0]
 
         if not self.license_key_str:
             await self.close()
@@ -114,11 +116,32 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_or_create_participant(self):
         # Participant belongs to the customer admin user, and is identified by device/visitor ID
-        participant, _ = Participant.objects.get_or_create(
+        participant, created = Participant.objects.get_or_create(
             user=self.customer_user,
             device=self.device,
-            defaults={"name": self.username},
+            defaults={
+                "name": self.username,
+                "phone": self.phone,
+                "email": self.email,
+            },
         )
+        if not created:
+            updated = False
+            if (
+                self.username
+                and participant.name != self.username
+                and self.username != "Guest"
+            ):
+                participant.name = self.username
+                updated = True
+            if self.phone and participant.phone != self.phone:
+                participant.phone = self.phone
+                updated = True
+            if self.email and participant.email != self.email:
+                participant.email = self.email
+                updated = True
+            if updated:
+                participant.save()
         return participant
 
     @database_sync_to_async

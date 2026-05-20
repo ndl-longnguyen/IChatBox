@@ -66,4 +66,6 @@ class Participant(models.Model):
         User, related_name="participants", on_delete=models.CASCADE
     )
     name = models.CharField(max_length=255, null=True, blank=True)
+    phone = models.CharField(max_length=50, null=True, blank=True)
+    email = models.CharField(max_length=100, null=True, blank=True)
     device = models.TextField(null=True, blank=True)

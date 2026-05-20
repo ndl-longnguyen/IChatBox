@@ -80,7 +80,20 @@ def chat_view(request):
 
 @login_required(login_url=LOGIN_URL)
 def profile_view(request):
-    return render(request, "admin/profile.html", {"user": request.user})
+    success = None
+    if request.method == "POST":
+        allow_anonymous = request.POST.get("allow_anonymous") == "on"
+        customer_key = getattr(request.user, "customer_key", None)
+        if customer_key:
+            customer_key.allow_anonymous = allow_anonymous
+            customer_key.save()
+            success = "Widget settings saved successfully!"
+
+    return render(
+        request,
+        "admin/profile.html",
+        {"user": request.user, "success": success},
+    )
 
 
 def logout_view(request):
@@ -89,3 +102,22 @@ def logout_view(request):
     """
     logout(request)
     return redirect("login")
+
+
+from django.http import JsonResponse
+from chat.models import CustomerKey
+
+
+def widget_config(request):
+    token = request.GET.get("token")
+    if not token:
+        return JsonResponse({"error": "Token is required"}, status=400)
+    try:
+        key = CustomerKey.objects.get(key=token)
+        return JsonResponse(
+            {
+                "allow_anonymous": key.allow_anonymous,
+            }
+        )
+    except (CustomerKey.DoesNotExist, ValueError):
+        return JsonResponse({"error": "Invalid token"}, status=404)

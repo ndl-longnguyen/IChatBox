@@ -7,6 +7,17 @@ function IChatBox(options) {
         fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
         document.head.appendChild(fontLink);
 
+        // Phát hiện Base URL của server từ thẻ script đang nhúng ichatbox.js
+        let baseUrl = 'http://127.0.0.1:8002';
+        const scripts = document.getElementsByTagName('script');
+        for (let i = 0; i < scripts.length; i++) {
+            if (scripts[i].src && scripts[i].src.includes('ichatbox.js')) {
+                const url = new URL(scripts[i].src);
+                baseUrl = `${url.protocol}//${url.host}`;
+                break;
+            }
+        }
+
         // Tạo và chèn cấu trúc HTML cho IChatBox vào trang
         const chatContainer = document.createElement('div');
         chatContainer.id = 'ichatbox-container';
@@ -122,6 +133,9 @@ function IChatBox(options) {
             #ichatbox-messages::-webkit-scrollbar-thumb:hover {
                 background: #94a3b8;
             }
+            #ichatbox-messages::-webkit-scrollbar-thumb:active {
+                background: #64748b;
+            }
             #ichatbox-footer {
                 padding: 12px 16px;
                 background: #ffffff;
@@ -209,6 +223,19 @@ function IChatBox(options) {
                 from { opacity: 0; transform: translateY(8px); }
                 to { opacity: 1; transform: translateY(0); }
             }
+
+            /* Styles for contact form when anonymous is disabled */
+            #ichatbox-form-name:focus, #ichatbox-form-contact:focus {
+                border-color: #6366f1 !important;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+            }
+            #ichatbox-form-submit:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25) !important;
+            }
+            #ichatbox-form-submit:active {
+                transform: translateY(1px);
+            }
         `;
         const styleSheet = document.createElement('style');
         styleSheet.type = 'text/css';
@@ -258,55 +285,164 @@ function IChatBox(options) {
             localStorage.setItem('ichatbox_visitor_id', visitorId);
         }
 
-        // JavaScript để kết nối với WebSocket và xử lý sự kiện gửi tin nhắn
-        const chatSocket = new WebSocket(
-            `ws://127.0.0.1:8002/ws/user/chat/?token=${token}&username=${username}&device=${visitorId}`
-        );
+        // Tải cấu hình từ Backend API
+        fetch(`${baseUrl}/admin/widget-config/?token=${token}`)
+            .then(res => res.json())
+            .then(config => {
+                const allowAnonymous = config.allow_anonymous !== false; // Mặc định là true
+                const savedInfo = localStorage.getItem('ichatbox_visitor_info');
 
-        chatSocket.onmessage = function (e) {
-            const data = JSON.parse(e.data);
-            if (data.type === 'chat_message' || data.sender_type) {
-                const messages = document.querySelector('#ichatbox-messages');
-                const isMe = data.sender_type === 'PARTICIPANT';
+                if (!allowAnonymous && !savedInfo) {
+                    // Nếu KHÔNG cho phép ẩn danh và CHƯA nhập thông tin, hiển thị form liên hệ
+                    renderContactForm(allowAnonymous);
+                } else {
+                    // Ngược lại, tiến hành kết nối trực tiếp
+                    const parsedInfo = JSON.parse(savedInfo || '{}');
+                    const activeName = parsedInfo.name || username || 'Guest';
+                    const activeContact = parsedInfo.contact || '';
+                    connectWebSocket(activeName, activeContact);
+                }
+            })
+            .catch(err => {
+                console.warn('IChatBox: Failed to retrieve widget settings, using fallback configuration.', err);
+                connectWebSocket(username || 'Guest', '');
+            });
 
-                const alignSelf = isMe ? 'flex-end' : 'flex-start';
-                const alignText = isMe ? 'text-align: right;' : 'text-align: left;';
-                const label = isMe ? 'Bạn' : 'Hỗ trợ viên';
-                const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // Hàm render biểu mẫu thu thập thông tin
+        function renderContactForm(allowAnonymous) {
+            const messagesDiv = document.getElementById('ichatbox-messages');
+            const footerDiv = document.getElementById('ichatbox-footer');
 
-                const bgStyle = isMe
-                    ? 'background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border-radius: 18px 18px 2px 18px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);'
-                    : 'background: #ffffff; color: #1e293b; border-radius: 18px 18px 18px 2px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);';
+            // Ẩn thanh gửi tin nhắn
+            footerDiv.style.display = 'none';
 
-                messages.innerHTML += `
-                    <div class="ichatbox-msg-wrapper" style="align-self: ${alignSelf};">
-                        <span style="display: inline-block; padding: 10px 16px; max-width: 100%; word-wrap: break-word; font-size: 14px; line-height: 1.45; ${bgStyle}">
-                            ${data.message}
-                        </span>
-                        <span style="font-size: 9px; color: #94a3b8; margin-top: 4px; padding: 0 4px; ${alignText}">
-                            ${label} • ${timeString}
-                        </span>
+            messagesDiv.innerHTML = `
+                <div id="ichatbox-form-container" style="display: flex; flex-direction: column; gap: 16px; padding: 16px 8px; font-family: 'Inter', sans-serif;">
+                    <div style="text-align: center; margin-bottom: 8px;">
+                        <h5 style="font-weight: 700; color: #1e293b; margin: 0 0 6px 0; font-size: 16px;">Bắt đầu trò chuyện</h5>
+                        <p style="font-size: 13px; color: #64748b; margin: 0; line-height: 1.45;">Vui lòng cung cấp thông tin liên hệ của bạn để chúng tôi hỗ trợ kịp thời nhé.</p>
                     </div>
-                `;
-                messages.scrollTop = messages.scrollHeight;
-            }
-        };
 
-        const sendMessage = () => {
-            const input = document.querySelector('#ichatbox-input');
-            const message = input.value.trim();
-            if (message) {
-                chatSocket.send(JSON.stringify({ 'message': message }));
-                input.value = '';
-            }
-        };
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Họ và tên <span style="color: #ef4444;">*</span></label>
+                        <input id="ichatbox-form-name" type="text" placeholder="Nhập họ và tên của bạn..." style="padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; transition: all 0.2s;" required>
+                    </div>
 
-        document.querySelector('#ichatbox-send').onclick = sendMessage;
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Số điện thoại hoặc Email <span style="color: #ef4444;">*</span></label>
+                        <input id="ichatbox-form-contact" type="text" placeholder="Nhập SĐT hoặc Email..." style="padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; transition: all 0.2s;" required>
+                    </div>
 
-        document.querySelector('#ichatbox-input').onkeypress = function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
+                    <div id="ichatbox-form-error" style="color: #dc2626; font-size: 12px; display: none; font-weight: 500; align-items: center; gap: 6px;">
+                        ⚠️ Vui lòng điền đầy đủ các thông tin bắt buộc.
+                    </div>
+
+                    <button id="ichatbox-form-submit" style="background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; outline: none;">
+                        Bắt đầu trò chuyện <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </div>
+            `;
+
+            // Xử lý sự kiện nhấn submit
+            document.getElementById('ichatbox-form-submit').addEventListener('click', () => {
+                const nameInput = document.getElementById('ichatbox-form-name');
+                const contactInput = document.getElementById('ichatbox-form-contact');
+                const errorDiv = document.getElementById('ichatbox-form-error');
+
+                const name = nameInput.value.trim();
+                const contact = contactInput.value.trim();
+
+                if (!name || !contact) {
+                    errorDiv.style.display = 'flex';
+                    if (!name) nameInput.style.borderColor = '#ef4444';
+                    if (!contact) contactInput.style.borderColor = '#ef4444';
+                    return;
+                }
+
+                // Lưu thông tin
+                localStorage.setItem('ichatbox_visitor_info', JSON.stringify({ name, contact }));
+
+                // Hiện lại thanh nhắn tin và xóa sạch form
+                footerDiv.style.display = 'flex';
+                messagesDiv.innerHTML = '';
+
+                // Bắt đầu kết nối chat thật sự
+                connectWebSocket(name, contact);
+            });
+
+            // Gỡ bỏ viền đỏ khi gõ chữ lại
+            document.getElementById('ichatbox-form-name').addEventListener('input', (e) => {
+                e.target.style.borderColor = '#e2e8f0';
+            });
+            document.getElementById('ichatbox-form-contact').addEventListener('input', (e) => {
+                e.target.style.borderColor = '#e2e8f0';
+            });
+        }
+
+        // Khởi tạo kết nối WebSocket chat
+        function connectWebSocket(activeName, activeContact) {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsHost = baseUrl.replace(/^https?:\/\//, '');
+
+            let phoneParam = '';
+            let emailParam = '';
+            if (activeContact) {
+                if (activeContact.includes('@')) {
+                    emailParam = `&email=${encodeURIComponent(activeContact)}`;
+                } else {
+                    phoneParam = `&phone=${encodeURIComponent(activeContact)}`;
+                }
             }
-        };
+
+            const chatSocket = new WebSocket(
+                `${wsProtocol}//${wsHost}/ws/user/chat/?token=${token}&username=${encodeURIComponent(activeName)}&device=${visitorId}${phoneParam}${emailParam}`
+            );
+
+            chatSocket.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                if (data.type === 'chat_message' || data.sender_type) {
+                    const messages = document.querySelector('#ichatbox-messages');
+                    const isMe = data.sender_type === 'PARTICIPANT';
+
+                    const alignSelf = isMe ? 'flex-end' : 'flex-start';
+                    const alignText = isMe ? 'text-align: right;' : 'text-align: left;';
+                    const label = isMe ? 'Bạn' : 'Hỗ trợ viên';
+                    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    const bgStyle = isMe
+                        ? 'background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border-radius: 18px 18px 2px 18px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);'
+                        : 'background: #ffffff; color: #1e293b; border-radius: 18px 18px 18px 2px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);';
+
+                    messages.innerHTML += `
+                        <div class="ichatbox-msg-wrapper" style="align-self: ${alignSelf};">
+                            <span style="display: inline-block; padding: 10px 16px; max-width: 100%; word-wrap: break-word; font-size: 14px; line-height: 1.45; ${bgStyle}">
+                                ${data.message}
+                            </span>
+                            <span style="font-size: 9px; color: #94a3b8; margin-top: 4px; padding: 0 4px; ${alignText}">
+                                ${label} • ${timeString}
+                            </span>
+                        </div>
+                    `;
+                    messages.scrollTop = messages.scrollHeight;
+                }
+            };
+
+            const sendMessage = () => {
+                const input = document.querySelector('#ichatbox-input');
+                const message = input.value.trim();
+                if (message) {
+                    chatSocket.send(JSON.stringify({ 'message': message }));
+                    input.value = '';
+                }
+            };
+
+            document.querySelector('#ichatbox-send').onclick = sendMessage;
+
+            document.querySelector('#ichatbox-input').onkeypress = function (e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            };
+        }
     })
 }

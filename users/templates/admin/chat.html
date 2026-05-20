@@ -412,7 +412,13 @@
                                     </a>
                                     <div class="chat-about">
                                         <h6 class="m-b-0">{{ room.participant.name }}</h6>
-                                        <small>Last seen: {{ messages.last.created_at|date:"h:i A, d/m/Y" }}</small>
+                                        {% if room.participant.email or room.participant.phone %}
+                                            <small class="d-block text-muted" style="font-size: 11px;">
+                                                {% if room.participant.email %}<i class="fa fa-envelope mr-1"></i>{{ room.participant.email }}{% endif %}
+                                                {% if room.participant.phone %}<span class="mx-2">|</span><i class="fa fa-phone mr-1"></i>{{ room.participant.phone }}{% endif %}
+                                            </small>
+                                        {% endif %}
+                                        <small class="d-block mt-1">Last seen: {{ messages.last.created_at|date:"h:i A, d/m/Y" }}</small>
                                     </div>
                                 </div>
                                 <div class="col-lg-6 text-right">
