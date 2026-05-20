@@ -106,6 +106,8 @@ def logout_view(request):
 
 from django.http import JsonResponse
 from chat.models import CustomerKey
+from users.models import Participant
+from chat.models import ChatRoom, ChatMessage
 
 
 def widget_config(request):
@@ -117,9 +119,16 @@ def widget_config(request):
         return response
     try:
         key = CustomerKey.objects.get(key=token)
+        if not key.is_active:
+            response = JsonResponse({"error": "Key is inactive"}, status=403)
+            response["Access-Control-Allow-Origin"] = "*"
+            response["Access-Control-Allow-Headers"] = "*"
+            return response
         response = JsonResponse(
             {
                 "allow_anonymous": key.allow_anonymous,
+                "plan": key.plan,
+                "history_limit": key.history_limit,
             }
         )
         response["Access-Control-Allow-Origin"] = "*"
@@ -130,3 +139,90 @@ def widget_config(request):
         response["Access-Control-Allow-Origin"] = "*"
         response["Access-Control-Allow-Headers"] = "*"
         return response
+
+
+def widget_history(request):
+    token = request.GET.get("token")
+    device = request.GET.get("device")
+    limit = request.GET.get("limit")
+    try:
+        limit = int(limit) if limit else 50
+    except ValueError:
+        limit = 50
+    limit = max(1, min(limit, 200))
+
+    if not token or not device:
+        response = JsonResponse(
+            {"error": "token and device are required"},
+            status=400,
+        )
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
+
+    try:
+        key = CustomerKey.objects.get(key=token)
+        if not key.is_active:
+            response = JsonResponse({"error": "Key is inactive"}, status=403)
+            response["Access-Control-Allow-Origin"] = "*"
+            response["Access-Control-Allow-Headers"] = "*"
+            return response
+    except (CustomerKey.DoesNotExist, ValueError):
+        response = JsonResponse({"error": "Invalid token"}, status=404)
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
+
+    # Enforce plan limit (server-side source of truth)
+    limit = min(limit, int(key.history_limit or 0) or 50)
+
+    participant = Participant.objects.filter(
+        user=key.user, device=device
+    ).first()
+    if not participant:
+        response = JsonResponse(
+            {"messages": [], "participant": None},
+            status=200,
+        )
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
+
+    room = ChatRoom.objects.filter(
+        user=key.user, participant=participant
+    ).first()
+    if not room:
+        response = JsonResponse(
+            {"messages": [], "participant": {"name": participant.name}},
+            status=200,
+        )
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
+
+    messages = ChatMessage.objects.filter(chat_room=room).order_by(
+        "-created_at"
+    )[:limit]
+    serialized = [
+        {
+            "sender_type": msg.sender_type,
+            "message": msg.content,
+            "created_at": msg.created_at.isoformat(),
+        }
+        for msg in reversed(list(messages))
+    ]
+
+    response = JsonResponse(
+        {
+            "participant": {
+                "name": participant.name,
+                "email": participant.email,
+                "phone": participant.phone,
+                "device": participant.device,
+            },
+            "messages": serialized,
+        }
+    )
+    response["Access-Control-Allow-Origin"] = "*"
+    response["Access-Control-Allow-Headers"] = "*"
+    return response

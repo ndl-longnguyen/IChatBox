@@ -1,6 +1,10 @@
 # IChatBox
 IChatBox is a user-friendly chat solution designed for easy integration into existing websites. It offers seamless real-time communication, is highly customizable, and enhances user engagement with minimal setup. Ideal for adding interactive features to any site.
 
+## Specs
+- `docs/SPECS.md`
+- `docs/PACKAGES.md`
+
 # Run step:
 ## 1. Clone the repository
 ```bash
@@ -37,3 +41,11 @@ python manage.py runserver
 ```
 ## 8. Access the chatbox
 Open your browser and go to http://localhost:8000/ to see the IChatBox in action.
+
+## Super admin
+- Django Admin: `http://127.0.0.1:8002/supper-admin/`
+
+## Tenant admin
+- Login: `http://127.0.0.1:8002/admin/login/`
+- Chat UI: `http://127.0.0.1:8002/admin/chat/`
+- Widget settings: `http://127.0.0.1:8002/admin/profile/`
