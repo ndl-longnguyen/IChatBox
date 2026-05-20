@@ -1,35 +1,81 @@
 {% extends "includes/master.html" %}
 
+{% block title %}Sign in to IChatBox{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-lg-5 col-md-7 col-sm-9">
-        <div class="card">
-            <div class="card-header text-center">
-                <h3>Login to IChatBox</h3>
+<div class="d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 80px); background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%), radial-gradient(circle at bottom left, rgba(79, 70, 229, 0.05), transparent 40%);">
+    <div class="col-lg-4 col-md-6 col-sm-8 px-4" style="max-width: 440px;">
+        <div class="card border-0 shadow-lg" style="border-radius: 18px; overflow: hidden; background: #ffffff;">
+            <!-- Brand Highlight Header -->
+            <div class="text-center pt-5 pb-4 px-4 bg-white">
+                <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width: 54px; height: 54px; background: #eef2ff; border-radius: 14px;">
+                    <i class="fa fa-comments" style="font-size: 24px; color: #4f46e5;"></i>
+                </div>
+                <h4 class="font-weight-bold text-dark mb-1" style="letter-spacing: -0.5px;">Welcome Back</h4>
+                <p class="text-muted small mb-0">Sign in to manage your website chat integrations</p>
             </div>
-            <div class="card-body">
-                <form method="POST" action="{% url "login" %}">
+
+            <div class="card-body px-4 py-3">
+                <form method="POST" action="{% url 'login' %}">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
+
+                    <!-- Username Input -->
+                    <div class="form-group mb-3">
+                        <label for="username" class="small text-muted font-weight-bold text-uppercase" style="font-size: 11px;">Username</label>
+                        <div class="input-group" style="border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; overflow: hidden; padding: 2px 10px; align-items: center; transition: border-color 0.2s ease;">
+                            <div class="input-group-prepend border-0">
+                                <span class="input-group-text border-0 bg-transparent text-muted p-0 pr-2"><i class="fa fa-user"></i></span>
+                            </div>
+                            <input type="text" class="form-control border-0 bg-transparent py-2 shadow-none" style="font-size: 14px;" id="username" name="username" placeholder="Enter your username" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+
+                    <!-- Password Input -->
+                    <div class="form-group mb-4">
+                        <label for="password" class="small text-muted font-weight-bold text-uppercase" style="font-size: 11px;">Password</label>
+                        <div class="input-group" style="border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; overflow: hidden; padding: 2px 10px; align-items: center; transition: border-color 0.2s ease;">
+                            <div class="input-group-prepend border-0">
+                                <span class="input-group-text border-0 bg-transparent text-muted p-0 pr-2"><i class="fa fa-lock"></i></span>
+                            </div>
+                            <input type="password" class="form-control border-0 bg-transparent py-2 shadow-none" style="font-size: 14px;" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
                     </div>
+
+                    <!-- Error Alert -->
                     {% if error %}
-                        <div class="error-message mb-3" style="color: red;">
-                            {{ error }}
+                        <div class="alert alert-danger border-0 py-2 px-3 small mb-3" style="border-radius: 8px; background-color: #fef2f2; color: #991b1b; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa fa-exclamation-circle"></i>
+                            <span>{{ error }}</span>
                         </div>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary btn-block py-2" style="border-radius: 10px; font-weight: 600; font-size: 14px;">
+                        Sign In <i class="fa fa-arrow-right ml-1"></i>
+                    </button>
                 </form>
             </div>
-            <div class="card-footer text-center">
-                <a href="{% url "register" %}">Don't have an account? Register here</a>
+
+            <!-- Footer Link -->
+            <div class="card-footer border-0 text-center bg-white pt-2 pb-4">
+                <span class="text-muted small">New to IChatBox?</span>
+                <a href="{% url 'register' %}" class="small font-weight-bold text-primary ml-1" style="text-decoration: none;">Create Account</a>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Simple JavaScript to handle beautiful active styling for the inputs
+    document.querySelectorAll('.input-group input').forEach(input => {
+        input.addEventListener('focus', () => {
+            input.closest('.input-group').style.borderColor = '#6366f1';
+            input.closest('.input-group').style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.12)';
+        });
+        input.addEventListener('blur', () => {
+            input.closest('.input-group').style.borderColor = '#e2e8f0';
+            input.closest('.input-group').style.boxShadow = 'none';
+        });
+    });
+</script>
 {% endblock content %}
