@@ -104,23 +104,53 @@ function IChatBox(options) {
             }
         });
 
+        // Tạo hoặc lấy ID duy nhất cho visitor từ localStorage
+        let visitorId = localStorage.getItem('ichatbox_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('ichatbox_visitor_id', visitorId);
+        }
+
         // JavaScript để kết nối với WebSocket và xử lý sự kiện gửi tin nhắn
         const chatSocket = new WebSocket(
-            `ws://127.0.0.1:8002/ws/user/chat/?token=${token}&username=${username}`
+            `ws://127.0.0.1:8002/ws/user/chat/?token=${token}&username=${username}&device=${visitorId}`
         );
 
         chatSocket.onmessage = function (e) {
             const data = JSON.parse(e.data);
-            const messages = document.querySelector('#ichatbox-messages');
-            messages.innerHTML += '<div>' + data.message + '</div>';
-            messages.scrollTop = messages.scrollHeight;
+            if (data.type === 'chat_message' || data.sender_type) {
+                const messages = document.querySelector('#ichatbox-messages');
+                const isMe = data.sender_type === 'PARTICIPANT';
+
+                const alignStyle = isMe ? 'text-align: right;' : 'text-align: left;';
+                const bgStyle = isMe ? 'background-color: #007bff; color: white;' : 'background-color: #e9ecef; color: black;';
+
+                messages.innerHTML += `
+                    <div style="margin: 8px 5px; ${alignStyle}">
+                        <span style="display: inline-block; padding: 8px 14px; border-radius: 16px; max-width: 80%; word-wrap: break-word; font-family: sans-serif; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.15); ${bgStyle}">
+                            ${data.message}
+                        </span>
+                    </div>
+                `;
+                messages.scrollTop = messages.scrollHeight;
+            }
         };
 
-        document.querySelector('#ichatbox-send').onclick = function () {
+        const sendMessage = () => {
             const input = document.querySelector('#ichatbox-input');
-            const message = input.value;
-            chatSocket.send(JSON.stringify({ 'message': message }));
-            input.value = '';
+            const message = input.value.trim();
+            if (message) {
+                chatSocket.send(JSON.stringify({ 'message': message }));
+                input.value = '';
+            }
+        };
+
+        document.querySelector('#ichatbox-send').onclick = sendMessage;
+
+        document.querySelector('#ichatbox-input').onkeypress = function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
         };
     })
 }

@@ -38,6 +38,14 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=30, unique=True)
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    # Liên kết với CustomerKey
+    customer_key = models.OneToOneField(
+        "chat.CustomerKey",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="linked_user",
+    )
     first_name = models.CharField(max_length=30, null=True, blank=True)
     last_name = models.CharField(max_length=30, null=True, blank=True)
     is_active = models.BooleanField(default=True)

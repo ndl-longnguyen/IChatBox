@@ -111,7 +111,7 @@
 </div>
 
 <script>
-   // Function to extract chat_room_id from the URL
+// Function to extract chat_room_id from the URL
 function getChatRoomId() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('room'); // Assumes the room ID is passed as a query parameter
@@ -143,71 +143,111 @@ function getCurrentDateTime() {
 // Function to scroll to the bottom of the chat history
 function scrollToBottom() {
     const chatHistory = document.querySelector('.chat-history');
-    chatHistory.scrollTop = chatHistory.scrollHeight;
+    if (chatHistory) {
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
 }
 
-scrollToBottom()
+scrollToBottom();
 
-// Ensure chat_room_id is present
-if (chat_room_id) {
-    // Establish WebSocket connection
-    const chatSocket = new WebSocket(
-        `ws://127.0.0.1:8002/ws/admin/chat/?token={{ user.token }}&username={{ user.first_name }}{{ user.last_name }}&room=${chat_room_id}`
-    );
+// Establish WebSocket connection (always connect to receive new room notifications)
+const wsUrl = `ws://127.0.0.1:8002/ws/admin/chat/?token={{ user.token }}&username={{ user.first_name }}{{ user.last_name }}` + (chat_room_id ? `&room=${chat_room_id}` : '');
+const chatSocket = new WebSocket(wsUrl);
 
-    // Handle incoming messages
-    chatSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        const messages = document.querySelector('.chat-content');
-        const currentTime = getCurrentDateTime();
+// Handle incoming messages
+chatSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    const currentTime = getCurrentDateTime();
 
-        // Append incoming message to the chat history
-        messages.innerHTML += `
-            <li class="clearfix">
-                <div class="message-data text-right">
-                    <span class="message-data-time">${currentTime}</span>
-                    <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
-                </div>
-                <div class="message other-message float-right">${data.message}</div>
-            </li>`;
+    // 1. Xử lý khi có khách hàng mới bắt đầu chat (tạo phòng mới)
+    if (data.type === 'new_room') {
+        const chatList = document.querySelector('.chat-list');
+        // Kiểm tra xem phòng này đã có trong sidebar chưa
+        const existingRoom = document.querySelector(`a[href*="room=${data.room_id}"]`);
+        if (!existingRoom && chatList) {
+            const li = document.createElement('li');
+            li.className = 'clearfix';
+            li.innerHTML = `
+                <a href="{% url 'chat' %}?room=${data.room_id}">
+                    <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+                    <div class="about">
+                        <div class="name">${data.participant_name}</div>
+                        <div class="status">
+                            <i class="fa fa-circle online"></i>
+                            Just now
+                        </div>
+                    </div>
+                </a>
+            `;
+            chatList.prepend(li);
+        }
+        return;
+    }
 
-        // Scroll to the bottom
-        scrollToBottom();
-    };
+    // 2. Xử lý khi có tin nhắn chat mới
+    if (data.type === 'chat_message' || data.sender_type) {
+        // Chỉ append tin nhắn vào box nếu đang mở đúng phòng chat đó
+        if (data.chat_room_id === chat_room_id) {
+            const messages = document.querySelector('.chat-content');
+            if (!messages) return;
 
-    // Handle sending messages
-    document.querySelector('.send-message').onclick = function () {
-        const input = document.querySelector('.ichatbox-input');
-        const message = input.value;
-        const messages = document.querySelector('.chat-content');
-        const currentTime = getCurrentDateTime();
+            if (data.sender_type === 'USER') {
+                // Tin nhắn từ Admin (chính mình)
+                messages.innerHTML += `
+                    <li class="clearfix">
+                        <div class="message-data">
+                            <span class="message-data-time">${currentTime}</span>
+                        </div>
+                        <div class="message my-message">${data.message}</div>
+                    </li>`;
+            } else {
+                // Tin nhắn từ Khách hàng
+                messages.innerHTML += `
+                    <li class="clearfix">
+                        <div class="message-data text-right">
+                            <span class="message-data-time">${currentTime}</span>
+                            <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                        </div>
+                        <div class="message other-message float-right">${data.message}</div>
+                    </li>`;
+            }
 
-        // Append sent message to the chat history
-        messages.innerHTML += `
-            <li class="clearfix">
-                <div class="message-data">
-                    <span class="message-data-time">${currentTime}</span>
-                </div>
-                <div class="message my-message">${message}</div>
-            </li>`;
+            // Cuộn xuống cuối
+            scrollToBottom();
+        }
+    }
+};
 
-        // Scroll to the bottom
-        scrollToBottom();
+// Handle sending messages
+const sendMessage = () => {
+    const input = document.querySelector('.ichatbox-input');
+    if (!input) return;
+    const message = input.value.trim();
+    if (!message || !chat_room_id) return;
 
-        // Send message via WebSocket
-        chatSocket.send(JSON.stringify({
-            'message': message,
-            "username": "{{ user.first_name }}{{ user.last_name }}",
-            "chat_room_id": chat_room_id
-        }));
+    // Gửi tin nhắn qua WebSocket (không tự append local nữa để tránh duplicate)
+    chatSocket.send(JSON.stringify({
+        'message': message,
+        'chat_room_id': chat_room_id
+    }));
 
-        // Clear input field
-        input.value = '';
-    };
-} else {
-    console.error('Chat room ID not found.');
+    // Xóa ô input
+    input.value = '';
+};
+
+const sendButton = document.querySelector('.send-message');
+if (sendButton) {
+    sendButton.onclick = sendMessage;
 }
 
+const textInput = document.querySelector('.ichatbox-input');
+if (textInput) {
+    textInput.onkeypress = function (e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    };
+}
 </script>
 
 {% endblock content %}
