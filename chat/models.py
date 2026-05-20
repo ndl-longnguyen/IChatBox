@@ -11,6 +11,7 @@ class CustomerKey(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="customer_keys"
     )
+    allow_anonymous = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
