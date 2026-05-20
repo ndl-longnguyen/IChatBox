@@ -10,32 +10,84 @@
     <link rel="stylesheet" href="{% static 'css/chat.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif !important;
+            background-color: #f8fafc !important;
+            color: #1e293b !important;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 14px 24px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01) !important;
+        }
+
+        .navbar-brand {
+            font-weight: 700 !important;
+            color: #4f46e5 !important;
+            font-size: 20px !important;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-nav .nav-link {
+            color: #64748b !important;
+            font-weight: 500 !important;
+            font-size: 14px !important;
+            padding: 8px 16px !important;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            margin: 0 2px;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #4f46e5 !important;
+            background-color: #f8fafc;
+        }
+
+        .navbar-nav .nav-item.active .nav-link {
+            color: #4f46e5 !important;
+            background-color: #eef2ff !important;
+        }
+
+        /* Modern Button Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+            border: none !important;
+            font-weight: 500 !important;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15) !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25) !important;
+        }
+    </style>
 </head>
 
 <body>
 
     {% if user.is_authenticated %}
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="#">IChatBox Admin</a>
+            <a class="navbar-brand" href="{% url 'chat' %}"><i class="fa fa-comments mr-2"></i>IChatBox Admin</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="#">Dashboard <span class="sr-only">(current)</span></a>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'chat' %}active{% endif %}">
+                        <a class="nav-link" href="{% url 'chat' %}"><i class="fa fa-comments-o mr-1"></i>Chat Live</a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                        <a class="nav-link" href="{% url 'profile' %}"><i class="fa fa-cog mr-1"></i>Settings & Integration</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url "chat" %}">Chat</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Users</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url "profile" %}">Settings</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                        <a class="nav-link" href="{% url 'logout' %}"><i class="fa fa-sign-out mr-1"></i>Logout</a>
                     </li>
                 </ul>
             </div>

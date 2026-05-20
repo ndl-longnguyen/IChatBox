@@ -1,16 +1,129 @@
 {% extends "includes/master.html" %}
 
+{% block title %}IChatBox Settings & Integration{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h1>User Profile</h1>
-    <p><strong>Username:</strong> {{ user.username }}</p>
-    <p><strong>First Name:</strong> {{ user.first_name }}</p>
-    <p><strong>Last Name:</strong> {{ user.last_name }}</p>
-    <p><strong>Email:</strong> {{ user.email }}</p>
-    {% if user.token %}
-        <p><strong class="token">Token:</strong> {{ user.token }}</p>
-    {% else %}
-        <p><strong>Token:</strong> No token available</p>
-    {% endif %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Account Info Card -->
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="card-title mb-0"><i class="fa fa-user-circle-o mr-2"></i>Account Profile</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="small text-muted font-weight-bold text-uppercase">Username</label>
+                        <p class="h6 font-weight-normal">{{ user.username }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted font-weight-bold text-uppercase">Full Name</label>
+                        <p class="h6 font-weight-normal">{{ user.first_name }} {{ user.last_name }}</p>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="small text-muted font-weight-bold text-uppercase">Admin Socket Token</label>
+                        <div class="input-group">
+                            <input type="text" id="adminToken" class="form-control bg-light font-family-monospace small" readonly value="{{ user.token }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('adminToken', this)">
+                                    <i class="fa fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-danger mt-1 d-block"><i class="fa fa-warning mr-1"></i>Keep this secret. Do not expose this token on your public website.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- License & Integration Card -->
+        <div class="col-md-7 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="card-title mb-0"><i class="fa fa-code mr-2"></i>License & Website Integration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label class="small text-success font-weight-bold text-uppercase d-block">Your Public License Key</label>
+                        {% if user.customer_key %}
+                            <div class="input-group">
+                                <input type="text" id="licenseKey" class="form-control font-weight-bold text-success bg-light" readonly value="{{ user.customer_key.key }}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-success" type="button" onclick="copyToClipboard('licenseKey', this)">
+                                        <i class="fa fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning py-2 mb-0">
+                                <i class="fa fa-exclamation-triangle mr-2"></i> No active license key found. Please contact support.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <h6 class="font-weight-bold text-dark mb-3"><i class="fa fa-rocket mr-2"></i>Quick Integration Guide</h6>
+                    <p class="text-muted small">
+                        To add the chatbox widget to your website, copy and paste the following HTML snippet right before the closing <code>&lt;/body&gt;</code> tag of your webpages:
+                    </p>
+
+                    <div class="position-relative">
+                        <pre class="bg-dark text-light p-3 rounded small font-family-monospace" id="codeSnippet" style="max-height: 250px; overflow-y: auto;">&lt;!-- IChatBox Live Support Widget --&gt;
+&lt;script src="http://localhost:8002/static/ichatbox.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    IChatBox({
+        token: "{{ user.customer_key.key|default:'YOUR_LICENSE_KEY' }}",
+        username: "Guest_" + Math.floor(Math.random() * 1000)
+    });
+&lt;/script&gt;</pre>
+                        <button class="btn btn-sm btn-outline-light position-absolute" style="top: 10px; right: 10px;" onclick="copyTextById('codeSnippet', this)">
+                            <i class="fa fa-copy mr-1"></i> Copy Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+function copyToClipboard(inputId, button) {
+    const input = document.getElementById(inputId);
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa fa-check"></i> Copied!';
+        button.classList.remove('btn-outline-secondary', 'btn-success');
+        button.classList.add('btn-dark');
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-dark');
+            if (inputId === 'licenseKey') {
+                button.classList.add('btn-success');
+            } else {
+                button.classList.add('btn-outline-secondary');
+            }
+        }, 2000);
+    });
+}
+
+function copyTextById(elementId, button) {
+    const element = document.getElementById(elementId);
+    const text = element.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa fa-check"></i> Copied!';
+        button.classList.remove('btn-outline-light');
+        button.classList.add('btn-success');
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-light');
+        }, 2000);
+    });
+}
+</script>
 {% endblock content %}

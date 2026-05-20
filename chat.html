@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <!-- IChatBox Live Support Widget -->
+    <script src="http://localhost:8002/static/ichatbox.js"></script>
+    <script>
+        IChatBox({
+            token: "87fc766c-b4d1-406d-8b98-65689df59475",
+            username: "Guest_" + Math.floor(Math.random() * 1000)
+        });
+    </script>
+    <style>
+        /* Basic reset */
+        body,
+        h1,
+        p {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* General body styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+        }
+
+        /* Header styles */
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav ul li {
+            display: inline;
+            margin-right: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Main content styles */
+        main {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Footer styles */
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* Image styles */
+        .image-container {
+            margin: 1rem 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Services</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Welcome to Our Website!</h1>
+        <p>This is a basic home page layout with HTML, CSS, and JavaScript.</p>
+
+        <div class="image-container">
+            <img src="media/profile_pictures/img2.jpg" alt="Description of image 1" loading="lazy">
+        </div>
+        <div class="image-container">
+            <img src="media/profile_pictures/img6.jpg" alt="Description of image 2" loading="lazy">
+        </div>
+        <div class="image-container">
+            <img src="media/profile_pictures/img2.jpg" alt="Description of image 2" loading="lazy">
+        </div>
+        <div class="image-container">
+            <img src="media/profile_pictures/img6.jpg" alt="Description of image 2" loading="lazy">
+        </div>
+        <div class="image-container">
+            <img src="media/profile_pictures/img2.jpg" alt="Description of image 2" loading="lazy">
+        </div>
+        <div class="image-container">
+            <img src="media/profile_pictures/img6.jpg" alt="Description of image 2" loading="lazy">
+        </div>
+        <div class="image-container">
+            <img src="media/profile_pictures/img2.jpg" alt="Description of image 2" loading="lazy">
+        </div>
+
+        <button id="alertButton">Click Me!</button>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Your Company Name. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const alertButton = document.getElementById('alertButton');
+
+            alertButton.addEventListener('click', () => {
+                alert('Button clicked!');
+            });
+        });
+    </script>
+</body>
+
+</html>

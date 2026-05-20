@@ -58,7 +58,14 @@ def chat_view(request):
     rooms = ChatRoom.objects.filter(user=request.user).all()
     messages = None
     if room:
-        messages = ChatMessage.objects.filter(chat_room_id=room).all()
+        try:
+            active_room = ChatRoom.objects.get(id=room, user=request.user)
+            messages = ChatMessage.objects.filter(
+                chat_room=active_room
+            ).order_by("created_at")
+        except ChatRoom.DoesNotExist:
+            room = None
+            messages = None
     return render(
         request,
         "admin/chat.html",

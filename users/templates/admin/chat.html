@@ -1,6 +1,373 @@
 {% extends "includes/master.html" %}
 
 {% block content %}
+<style>
+    /* Google Fonts & Base Overrides */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    .chat-app {
+        font-family: 'Inter', -apple-system, sans-serif !important;
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.8) !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04) !important;
+        border-radius: 16px !important;
+        overflow: hidden;
+        height: calc(100vh - 120px);
+        display: flex;
+    }
+
+    /* Sidebar List Modernization */
+    .people-list {
+        background-color: #ffffff;
+        border-right: 1px solid #f1f5f9 !important;
+        padding: 20px !important;
+        width: 280px !important;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .people-list .input-group {
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #f8fafc;
+        padding: 2px 12px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .people-list .input-group-prepend {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .people-list .input-group-text {
+        background: transparent !important;
+        border: none !important;
+        color: #94a3b8 !important;
+        padding-right: 8px !important;
+    }
+
+    .people-list .form-control {
+        border: none !important;
+        background: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+        font-size: 13px;
+        color: #1e293b;
+        padding-left: 0 !important;
+    }
+
+    .people-list .chat-list {
+        overflow-y: auto;
+        flex: 1;
+        margin: 0 !important;
+        padding: 0;
+    }
+
+    .people-list .chat-list li {
+        border-radius: 10px;
+        padding: 12px 14px !important;
+        margin-bottom: 4px;
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+        background: transparent;
+    }
+
+    .people-list .chat-list li:hover {
+        background-color: #f8fafc !important;
+    }
+
+    .people-list .chat-list li.active {
+        background-color: #eef2ff !important;
+        border-left: 3px solid #4f46e5;
+    }
+
+    .people-list .chat-list li.active .name {
+        color: #4f46e5 !important;
+        font-weight: 600;
+    }
+
+    .people-list .chat-list li a {
+        text-decoration: none !important;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .people-list img, .chat-header img, .message-data img {
+        border-radius: 50% !important;
+        width: 40px !important;
+        height: 40px !important;
+        object-fit: cover;
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .people-list .about {
+        padding-left: 0 !important;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .people-list .name {
+        color: #1e293b;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .people-list .status {
+        color: #94a3b8;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .people-list .status i {
+        font-size: 8px;
+    }
+
+    .people-list .status i.online {
+        color: #10b981 !important;
+    }
+
+    /* Main Chat Area */
+    .chat {
+        border: none !important;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: 100%;
+        background-color: #ffffff;
+    }
+
+    .chat-header {
+        border-bottom: 1px solid #f1f5f9 !important;
+        padding: 16px 24px !important;
+        background: #ffffff;
+        z-index: 10;
+        flex-shrink: 0;
+    }
+
+    .chat-header .chat-about {
+        padding-left: 12px !important;
+    }
+
+    .chat-header h6 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 2px 0 !important;
+    }
+
+    .chat-header small {
+        font-size: 11px;
+        color: #94a3b8;
+    }
+
+    .chat-header .btn-outline-secondary,
+    .chat-header .btn-outline-primary,
+    .chat-header .btn-outline-info,
+    .chat-header .btn-outline-warning {
+        border-color: #e2e8f0 !important;
+        color: #64748b !important;
+        width: 38px;
+        height: 38px;
+        padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50% !important;
+        margin-left: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .chat-header .btn-outline-secondary:hover,
+    .chat-header .btn-outline-primary:hover,
+    .chat-header .btn-outline-info:hover,
+    .chat-header .btn-outline-warning:hover {
+        background-color: #f1f5f9 !important;
+        color: #1e293b !important;
+        transform: translateY(-1px);
+    }
+
+    /* Chat History & Bubbles */
+    .chat-history {
+        flex: 1;
+        overflow-y: auto;
+        background-color: #f8fafc;
+        padding: 24px !important;
+    }
+
+    .chat-history ul {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .chat-history .clearfix {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-history .message-data {
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .chat-history .message-data.text-right {
+        justify-content: flex-end;
+    }
+
+    .chat-history .message-data-time {
+        font-size: 10px;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .chat-history .message-data img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    /* Outgoing Bubble (Visitor/Other) */
+    .chat-history .other-message {
+        background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+        color: #ffffff !important;
+        font-size: 14px;
+        line-height: 1.45;
+        padding: 10px 16px !important;
+        border-radius: 18px 18px 2px 18px !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+        max-width: 70%;
+        word-wrap: break-word;
+        align-self: flex-end;
+    }
+
+    .chat-history .other-message:after {
+        display: none !important;
+    }
+
+    /* Incoming Bubble (Admin/Self) */
+    .chat-history .my-message {
+        background: #ffffff !important;
+        color: #1e293b !important;
+        font-size: 14px;
+        line-height: 1.45;
+        padding: 10px 16px !important;
+        border-radius: 18px 18px 18px 2px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
+        max-width: 70%;
+        word-wrap: break-word;
+        align-self: flex-start;
+    }
+
+    .chat-history .my-message:after {
+        display: none !important;
+    }
+
+    /* Input Area Modernization */
+    .chat-message {
+        border-top: 1px solid #f1f5f9 !important;
+        padding: 16px 24px !important;
+        background: #ffffff;
+        flex-shrink: 0;
+    }
+
+    .chat-message .input-group {
+        border: 1px solid #e2e8f0;
+        border-radius: 28px;
+        overflow: hidden;
+        background: #f8fafc;
+        padding: 4px 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .chat-message .input-group:focus-within {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+        background: #ffffff;
+    }
+
+    .chat-message .ichatbox-input {
+        border: none !important;
+        background: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+        padding: 8px 16px !important;
+        font-size: 14px;
+        color: #1e293b;
+        flex: 1;
+    }
+
+    .chat-message .send-message {
+        cursor: pointer;
+        width: 38px;
+        height: 38px;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+        color: white !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex-shrink: 0;
+    }
+
+    .chat-message .send-message:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .chat-message .send-message:active {
+        transform: scale(0.95);
+    }
+
+    .chat-message .input-group-text {
+        background: transparent !important;
+        border: none !important;
+        color: white !important;
+        padding: 0 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .chat-message .input-group-text i {
+        font-size: 14px;
+    }
+
+    /* Empty State */
+    .chat .text-center h5 {
+        font-weight: 500;
+        color: #64748b;
+    }
+</style>
+
 <div class="container">
     <div class="row clearfix">
         <div class="col-lg-12">
@@ -111,7 +478,7 @@
 </div>
 
 <script>
-   // Function to extract chat_room_id from the URL
+// Function to extract chat_room_id from the URL
 function getChatRoomId() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('room'); // Assumes the room ID is passed as a query parameter
@@ -143,71 +510,111 @@ function getCurrentDateTime() {
 // Function to scroll to the bottom of the chat history
 function scrollToBottom() {
     const chatHistory = document.querySelector('.chat-history');
-    chatHistory.scrollTop = chatHistory.scrollHeight;
+    if (chatHistory) {
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
 }
 
-scrollToBottom()
+scrollToBottom();
 
-// Ensure chat_room_id is present
-if (chat_room_id) {
-    // Establish WebSocket connection
-    const chatSocket = new WebSocket(
-        `ws://127.0.0.1:8002/ws/admin/chat/?token={{ user.token }}&username={{ user.first_name }}{{ user.last_name }}&room=${chat_room_id}`
-    );
+// Establish WebSocket connection (always connect to receive new room notifications)
+const wsUrl = `ws://127.0.0.1:8002/ws/admin/chat/?token={{ user.token }}&username={{ user.first_name }}{{ user.last_name }}` + (chat_room_id ? `&room=${chat_room_id}` : '');
+const chatSocket = new WebSocket(wsUrl);
 
-    // Handle incoming messages
-    chatSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        const messages = document.querySelector('.chat-content');
-        const currentTime = getCurrentDateTime();
+// Handle incoming messages
+chatSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    const currentTime = getCurrentDateTime();
 
-        // Append incoming message to the chat history
-        messages.innerHTML += `
-            <li class="clearfix">
-                <div class="message-data text-right">
-                    <span class="message-data-time">${currentTime}</span>
-                    <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
-                </div>
-                <div class="message other-message float-right">${data.message}</div>
-            </li>`;
+    // 1. Xử lý khi có khách hàng mới bắt đầu chat (tạo phòng mới)
+    if (data.type === 'new_room') {
+        const chatList = document.querySelector('.chat-list');
+        // Kiểm tra xem phòng này đã có trong sidebar chưa
+        const existingRoom = document.querySelector(`a[href*="room=${data.room_id}"]`);
+        if (!existingRoom && chatList) {
+            const li = document.createElement('li');
+            li.className = 'clearfix';
+            li.innerHTML = `
+                <a href="{% url 'chat' %}?room=${data.room_id}">
+                    <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+                    <div class="about">
+                        <div class="name">${data.participant_name}</div>
+                        <div class="status">
+                            <i class="fa fa-circle online"></i>
+                            Just now
+                        </div>
+                    </div>
+                </a>
+            `;
+            chatList.prepend(li);
+        }
+        return;
+    }
 
-        // Scroll to the bottom
-        scrollToBottom();
-    };
+    // 2. Xử lý khi có tin nhắn chat mới
+    if (data.type === 'chat_message' || data.sender_type) {
+        // Chỉ append tin nhắn vào box nếu đang mở đúng phòng chat đó
+        if (data.chat_room_id === chat_room_id) {
+            const messages = document.querySelector('.chat-content');
+            if (!messages) return;
 
-    // Handle sending messages
-    document.querySelector('.send-message').onclick = function () {
-        const input = document.querySelector('.ichatbox-input');
-        const message = input.value;
-        const messages = document.querySelector('.chat-content');
-        const currentTime = getCurrentDateTime();
+            if (data.sender_type === 'USER') {
+                // Tin nhắn từ Admin (chính mình)
+                messages.innerHTML += `
+                    <li class="clearfix">
+                        <div class="message-data">
+                            <span class="message-data-time">${currentTime}</span>
+                        </div>
+                        <div class="message my-message">${data.message}</div>
+                    </li>`;
+            } else {
+                // Tin nhắn từ Khách hàng
+                messages.innerHTML += `
+                    <li class="clearfix">
+                        <div class="message-data text-right">
+                            <span class="message-data-time">${currentTime}</span>
+                            <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                        </div>
+                        <div class="message other-message float-right">${data.message}</div>
+                    </li>`;
+            }
 
-        // Append sent message to the chat history
-        messages.innerHTML += `
-            <li class="clearfix">
-                <div class="message-data">
-                    <span class="message-data-time">${currentTime}</span>
-                </div>
-                <div class="message my-message">${message}</div>
-            </li>`;
+            // Cuộn xuống cuối
+            scrollToBottom();
+        }
+    }
+};
 
-        // Scroll to the bottom
-        scrollToBottom();
+// Handle sending messages
+const sendMessage = () => {
+    const input = document.querySelector('.ichatbox-input');
+    if (!input) return;
+    const message = input.value.trim();
+    if (!message || !chat_room_id) return;
 
-        // Send message via WebSocket
-        chatSocket.send(JSON.stringify({
-            'message': message,
-            "username": "{{ user.first_name }}{{ user.last_name }}",
-            "chat_room_id": chat_room_id
-        }));
+    // Gửi tin nhắn qua WebSocket (không tự append local nữa để tránh duplicate)
+    chatSocket.send(JSON.stringify({
+        'message': message,
+        'chat_room_id': chat_room_id
+    }));
 
-        // Clear input field
-        input.value = '';
-    };
-} else {
-    console.error('Chat room ID not found.');
+    // Xóa ô input
+    input.value = '';
+};
+
+const sendButton = document.querySelector('.send-message');
+if (sendButton) {
+    sendButton.onclick = sendMessage;
 }
 
+const textInput = document.querySelector('.ichatbox-input');
+if (textInput) {
+    textInput.onkeypress = function (e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    };
+}
 </script>
 
 {% endblock content %}
