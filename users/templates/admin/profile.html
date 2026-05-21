@@ -10,6 +10,12 @@
             <span class="font-weight-500">{{ success }}</span>
         </div>
     {% endif %}
+    {% if error %}
+        <div class="alert alert-danger border-0 py-3 px-4 mb-4 shadow-sm" style="border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa fa-exclamation-circle" style="font-size: 18px;"></i>
+            <span class="font-weight-500">{{ error }}</span>
+        </div>
+    {% endif %}
     <div class="row">
         <!-- Account Info & Settings Column -->
         <div class="col-md-5 mb-4">
@@ -19,27 +25,38 @@
                     <h5 class="card-title mb-0"><i class="fa fa-user-circle-o mr-2"></i>Account Profile</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label class="small text-muted font-weight-bold text-uppercase">Username</label>
-                        <p class="h6 font-weight-normal">{{ user.username }}</p>
-                    </div>
-                    <div class="mb-3">
-                        <label class="small text-muted font-weight-bold text-uppercase">Full Name</label>
-                        <p class="h6 font-weight-normal">{{ user.first_name }} {{ user.last_name }}</p>
-                    </div>
-                    <hr>
-                    <div class="mb-3">
-                        <label class="small text-muted font-weight-bold text-uppercase">Admin Socket Token</label>
-                        <div class="input-group">
-                            <input type="text" id="adminToken" class="form-control bg-light font-family-monospace small" readonly value="{{ user.token }}">
-                            <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('adminToken', this)">
-                                    <i class="fa fa-copy"></i> Copy
-                                </button>
-                            </div>
+                    <form method="POST" action="{% url 'profile' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_profile">
+                        <div class="mb-3">
+                            <label class="small text-muted font-weight-bold text-uppercase">Username</label>
+                            <input type="text" class="form-control bg-light" readonly value="{{ user.username }}">
                         </div>
-                        <small class="text-danger mt-1 d-block"><i class="fa fa-warning mr-1"></i>Keep this secret. Do not expose this token on your public website.</small>
-                    </div>
+                        <div class="mb-3">
+                            <label class="small text-muted font-weight-bold text-uppercase">First Name</label>
+                            <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted font-weight-bold text-uppercase">Last Name</label>
+                            <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="small text-muted font-weight-bold text-uppercase d-block mb-2">Change Password</label>
+                            <div class="form-group mb-3">
+                                <input type="password" name="current_password" class="form-control" placeholder="Current Password">
+                            </div>
+                            <div class="form-group mb-3">
+                                <input type="password" name="new_password" class="form-control" placeholder="New Password">
+                            </div>
+                            <div class="form-group mb-0">
+                                <input type="password" name="confirm_password" class="form-control" placeholder="Confirm New Password">
+                            </div>
+                            <small class="text-muted d-block mt-2">Leave password fields blank if you do not want to change your password.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block py-2" style="border-radius: 10px; font-weight: 600; font-size: 14px;">
+                            Save Profile <i class="fa fa-save ml-1"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -52,11 +69,12 @@
                     <form method="POST" action="{% url 'profile' %}">
                         {% csrf_token %}
                         <div class="form-group mb-4">
-                            <label class="small text-muted font-weight-bold text-uppercase d-block mb-2" style="font-size: 11px; letter-spacing: 0.5px;">Chat Access Mode</label>
-                            <div class="custom-control custom-switch mb-3">
-                                <input type="checkbox" class="custom-control-input" id="allowAnonymous" name="allow_anonymous" style="cursor: pointer;" {% if user.customer_key.allow_anonymous %}checked{% endif %}>
-                                <label class="custom-control-label font-weight-bold text-dark" for="allowAnonymous" style="cursor: pointer;">Allow Anonymous Chat</label>
-                            </div>
+                        <input type="hidden" name="action" value="update_widget">
+                        <label class="small text-muted font-weight-bold text-uppercase d-block mb-2" style="font-size: 11px; letter-spacing: 0.5px;">Chat Access Mode</label>
+                        <div class="custom-control custom-switch mb-3">
+                            <input type="checkbox" class="custom-control-input" id="allowAnonymous" name="allow_anonymous" style="cursor: pointer;" {% if user.customer_key.allow_anonymous %}checked{% endif %}>
+                            <label class="custom-control-label font-weight-bold text-dark" for="allowAnonymous" style="cursor: pointer;">Allow Anonymous Chat</label>
+                        </div>
                             <p class="text-muted small mb-0" style="line-height: 1.5;">
                                 <i class="fa fa-info-circle text-primary mr-1"></i>
                                 <strong>Enabled:</strong> Visitors can chat anonymously instantly (as Guest).<br>

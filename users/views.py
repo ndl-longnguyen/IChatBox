@@ -1,4 +1,9 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import (
+    authenticate,
+    login,
+    logout,
+    update_session_auth_hash,
+)
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, redirect
@@ -81,18 +86,57 @@ def chat_view(request):
 @login_required(login_url=LOGIN_URL)
 def profile_view(request):
     success = None
+    error = None
+
     if request.method == "POST":
-        allow_anonymous = request.POST.get("allow_anonymous") == "on"
-        customer_key = getattr(request.user, "customer_key", None)
-        if customer_key:
-            customer_key.allow_anonymous = allow_anonymous
-            customer_key.save()
-            success = "Widget settings saved successfully!"
+        action = request.POST.get("action")
+
+        if action == "update_profile":
+            first_name = request.POST.get("first_name", "").strip()
+            last_name = request.POST.get("last_name", "").strip()
+            current_password = request.POST.get("current_password", "")
+            new_password = request.POST.get("new_password", "")
+            confirm_password = request.POST.get("confirm_password", "")
+
+            if not first_name or not last_name:
+                error = "First name and last name are required."
+            else:
+                if current_password or new_password or confirm_password:
+                    if not current_password:
+                        error = "Current password is required to change your password."
+                    elif not request.user.check_password(current_password):
+                        error = "Current password is incorrect."
+                    elif new_password != confirm_password:
+                        error = "New password and confirmation do not match."
+                    elif not new_password:
+                        error = "New password cannot be empty."
+                    else:
+                        request.user.set_password(new_password)
+
+                if not error:
+                    request.user.first_name = first_name
+                    request.user.last_name = last_name
+                    request.user.save()
+                    if new_password:
+                        update_session_auth_hash(request, request.user)
+                    success = "Account profile saved successfully!"
+
+        elif action == "update_widget":
+            allow_anonymous = request.POST.get("allow_anonymous") == "on"
+            customer_key = getattr(request.user, "customer_key", None)
+            if customer_key:
+                customer_key.allow_anonymous = allow_anonymous
+                customer_key.save()
+                success = "Widget settings saved successfully!"
 
     return render(
         request,
         "admin/profile.html",
-        {"user": request.user, "success": success},
+        {
+            "user": request.user,
+            "success": success,
+            "error": error,
+        },
     )
 
 
