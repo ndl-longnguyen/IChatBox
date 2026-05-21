@@ -35,6 +35,7 @@ function IChatBox(options) {
                 </div>
                 <button id="ichatbox-close">&times;</button>
             </div>
+            <div id="ichatbox-history-controls"></div>
             <div id="ichatbox-messages"></div>
             <div style="text-align: center; font-size: 10px; color: #94a3b8; background-color: #f8fafc; padding: 4px 0 0 0; font-weight: 500; font-family: 'Inter', sans-serif;">
                 Powered by <span style="font-weight: 700; color: #6366f1;">IChatBox</span>
@@ -55,6 +56,64 @@ function IChatBox(options) {
             <div id="ichatbox-toggle-icon">💬</div>
         `;
         document.body.appendChild(toggleButton);
+
+        const contactBar = document.createElement('div');
+        contactBar.id = 'ichatbox-contact-bar';
+        document.body.appendChild(contactBar);
+
+        const applyWidgetPosition = (position) => {
+            const normalized = position || 'bottom-right';
+            const isTop = normalized.startsWith('top');
+            const isLeft = normalized.endsWith('left');
+            const isRight = normalized.endsWith('right');
+            const chatTop = isTop ? '190px' : '';
+            const chatBottom = isTop ? '' : '95px';
+            const toggleTop = isTop ? '20px' : '';
+            const toggleBottom = isTop ? '' : '20px';
+            const contactBarTop = isTop ? '96px' : '';
+            const contactBarBottom = isTop ? '' : '96px';
+
+            chatContainer.style.top = chatTop;
+            chatContainer.style.bottom = chatBottom;
+            chatContainer.style.left = isLeft ? '24px' : '';
+            chatContainer.style.right = isRight ? '24px' : '';
+
+            toggleButton.style.top = toggleTop;
+            toggleButton.style.bottom = toggleBottom;
+            toggleButton.style.left = isLeft ? '24px' : '';
+            toggleButton.style.right = isRight ? '24px' : '';
+
+            contactBar.style.top = contactBarTop;
+            contactBar.style.bottom = contactBarBottom;
+            contactBar.style.left = isLeft ? '24px' : '';
+            contactBar.style.right = isRight ? '24px' : '';
+        };
+
+        let historyCursor = null;
+        let historyHasMore = false;
+        let historyLoading = false;
+
+        const updateHistoryControls = () => {
+            const controls = document.getElementById('ichatbox-history-controls');
+            if (!controls) {
+                return;
+            }
+            controls.innerHTML = '';
+            if (historyHasMore) {
+                const button = document.createElement('button');
+                button.id = 'ichatbox-load-more';
+                button.type = 'button';
+                button.textContent = 'Xem tin nhắn cũ hơn';
+                button.style.cssText = 'border: none; background: #eef2ff; color: #3730a3; padding: 10px 14px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 12px; box-shadow: 0 6px 16px rgba(99, 102, 241, 0.12);';
+                button.disabled = historyLoading;
+                button.addEventListener('click', () => {
+                    if (!historyLoading && historyCursor) {
+                        loadChatHistory(50, null, historyCursor);
+                    }
+                });
+                controls.appendChild(button);
+            }
+        };
 
         // CSS để định vị và tạo kiểu dáng Premium cho IChatBox
         const styles = `
@@ -181,6 +240,10 @@ function IChatBox(options) {
             #ichatbox-send:active {
                 transform: scale(0.95);
             }
+            @keyframes ichatbox-pulse {
+                0%, 100% { box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35); }
+                50% { box-shadow: 0 8px 32px rgba(79, 70, 229, 0.25); transform: translateY(-1px); }
+            }
             #ichatbox-toggle {
                 position: fixed;
                 bottom: 20px;
@@ -196,9 +259,10 @@ function IChatBox(options) {
                 cursor: pointer;
                 z-index: 9999;
                 transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                animation: ichatbox-pulse 3.5s ease-in-out infinite;
             }
             #ichatbox-toggle:hover {
-                transform: scale(1.08) rotate(5deg);
+                transform: scale(1.1) rotate(5deg);
                 box-shadow: 0 6px 24px rgba(79, 70, 229, 0.45);
             }
             #ichatbox-toggle:active {
@@ -211,6 +275,63 @@ function IChatBox(options) {
                 align-items: center;
                 justify-content: center;
                 transition: transform 0.3s ease;
+            }
+            #ichatbox-contact-bar {
+                position: fixed;
+                bottom: 96px;
+                right: 24px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                z-index: 9998;
+                opacity: 0;
+                transform: translateY(10px);
+                transition: opacity 0.3s ease, transform 0.3s ease;
+            }
+            #ichatbox-contact-bar.active {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            #ichatbox-contact-bar a {
+                width: 52px;
+                height: 52px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 16px;
+                color: white;
+                text-decoration: none;
+                box-shadow: 0 14px 30px rgba(0, 0, 0, 0.15);
+                transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+                position: relative;
+                overflow: hidden;
+            }
+            #ichatbox-contact-bar a::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.08);
+                opacity: 0;
+                transition: opacity 0.25s ease;
+            }
+            #ichatbox-contact-bar a:hover::before {
+                opacity: 1;
+            }
+            #ichatbox-contact-bar a:hover {
+                transform: translateX(-2px) scale(1.05);
+                box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
+                filter: brightness(1.05);
+            }
+            #ichatbox-contact-bar a span {
+                font-size: 20px;
+                font-weight: 700;
+            }
+            @keyframes ichatbox-contact-glow {
+                0%, 100% { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16); }
+                50% { box-shadow: 0 18px 36px rgba(0, 0, 0, 0.26); transform: translateX(-1px); }
+            }
+            #ichatbox-contact-bar.active a {
+                animation: ichatbox-contact-glow 4s ease-in-out infinite;
             }
             .ichatbox-msg-wrapper {
                 display: flex;
@@ -241,6 +362,58 @@ function IChatBox(options) {
         styleSheet.type = 'text/css';
         styleSheet.innerText = styles;
         document.head.appendChild(styleSheet);
+
+        // Responsive CSS overrides for mobile and tablet
+        const responsiveStyles = `
+            @media (max-width: 600px) {
+                #ichatbox-container {
+                    width: calc(100vw - 48px) !important;
+                    height: 60vh !important;
+                    right: 12px !important;
+                    left: 12px !important;
+                    bottom: 84px !important;
+                    border-radius: 12px !important;
+                    transform: translateY(0) scale(1) !important;
+                }
+                #ichatbox-toggle {
+                    right: 12px !important;
+                    left: auto !important;
+                    bottom: 14px !important;
+                    top: auto !important;
+                    width: 56px !important;
+                    height: 56px !important;
+                }
+                #ichatbox-contact-bar {
+                    right: 12px !important;
+                    left: auto !important;
+                    bottom: 80px !important;
+                    top: auto !important;
+                    gap: 10px !important;
+                }
+                #ichatbox-contact-bar a {
+                    width: 48px !important;
+                    height: 48px !important;
+                    border-radius: 12px !important;
+                }
+                #ichatbox-messages { padding: 12px !important; }
+                #ichatbox-input { padding: 12px 14px !important; font-size: 15px !important; }
+            }
+
+            @media (min-width: 601px) and (max-width: 1024px) {
+                #ichatbox-container {
+                    width: 320px !important;
+                    height: 480px !important;
+                    right: 20px !important;
+                    bottom: 90px !important;
+                }
+                #ichatbox-toggle { right: 20px !important; bottom: 18px !important; }
+                #ichatbox-contact-bar { right: 20px !important; bottom: 86px !important; }
+            }
+        `;
+        const respSheet = document.createElement('style');
+        respSheet.type = 'text/css';
+        respSheet.innerText = responsiveStyles;
+        document.head.appendChild(respSheet);
 
         // Hiển thị hoặc ẩn chatbox khi nhấp vào nút điều khiển
         const chatContainerElem = document.getElementById('ichatbox-container');
@@ -322,6 +495,72 @@ function IChatBox(options) {
             );
         };
 
+        const normalizeSocialLink = (value, prefix) => {
+            if (!value) return null;
+            const trimmed = String(value).trim();
+            if (!trimmed) return null;
+            if (/^https?:\/\//i.test(trimmed)) {
+                return trimmed;
+            }
+            return `${prefix}${trimmed.replace(/^\/+/, '')}`;
+        };
+
+        const buildSocialContacts = (config) => {
+            if (!config || !config.show_social_links) {
+                return [];
+            }
+
+            const contacts = [];
+            if (config.social_facebook) {
+                const url = normalizeSocialLink(config.social_facebook, 'https://facebook.com/');
+                if (url) {
+                    contacts.push({ icon: 'f', label: 'Facebook', url, bg: '#1877f2', shadow: 'rgba(24, 119, 242, 0.35)' });
+                }
+            }
+            if (config.social_zalo) {
+                const value = String(config.social_zalo).trim();
+                let url = null;
+                if (/^https?:\/\//i.test(value)) {
+                    url = value;
+                } else {
+                    const normalized = value.replace(/^\+?/, '');
+                    url = `https://zalo.me/${normalized}`;
+                }
+                contacts.push({ icon: 'Z', label: 'Zalo', url, bg: '#0068ff', shadow: 'rgba(0, 104, 255, 0.35)' });
+            }
+            if (config.social_phone) {
+                const phone = String(config.social_phone).trim();
+                if (phone) {
+                    const normalized = phone.replace(/[^0-9+]/g, '');
+                    contacts.push({ icon: '☎', label: 'Call', url: `tel:${normalized}`, bg: '#10b981', shadow: 'rgba(16, 185, 129, 0.35)' });
+                }
+            }
+            return contacts;
+        };
+
+        const renderSocialContactBar = (config) => {
+            const contactBarElem = document.getElementById('ichatbox-contact-bar');
+            const contacts = buildSocialContacts(config);
+            if (!contactBarElem) {
+                return;
+            }
+            if (!contacts.length) {
+                contactBarElem.classList.remove('active');
+                contactBarElem.innerHTML = '';
+                return;
+            }
+            contactBarElem.innerHTML = contacts
+                .map(
+                    (item) => `
+                        <a href="${item.url}" target="_blank" rel="noopener noreferrer" title="${item.label}" style="background: ${item.bg}; box-shadow: 0 12px 24px ${item.shadow};">
+                            <span>${item.icon}</span>
+                        </a>
+                    `
+                )
+                .join('');
+            setTimeout(() => contactBarElem.classList.add('active'), 10);
+        };
+
         // Tải cấu hình từ Backend API
         fetch(`${baseUrl}/admin/widget-config/?token=${token}`)
             .then(res => res.json())
@@ -329,6 +568,9 @@ function IChatBox(options) {
                 if (config && config.error) {
                     throw new Error(config.error);
                 }
+
+                renderSocialContactBar(config);
+                applyWidgetPosition(config.widget_position);
 
                 const allowAnonymous = config.allow_anonymous !== false; // Mặc định là true
                 const historyLimit = (config && typeof config.history_limit === 'number')
@@ -348,6 +590,11 @@ function IChatBox(options) {
             })
             .catch(err => {
                 console.warn('IChatBox: Failed to retrieve widget settings, falling back to safe contact form.', err);
+                const contactBarElem = document.getElementById('ichatbox-contact-bar');
+                if (contactBarElem) {
+                    contactBarElem.classList.remove('active');
+                    contactBarElem.innerHTML = '';
+                }
                 const savedInfo = loadVisitorInfo();
 
                 if (hasCompleteVisitorInfo(savedInfo)) {
@@ -385,31 +632,81 @@ function IChatBox(options) {
             messages.scrollTop = messages.scrollHeight;
         }
 
-        function loadChatHistory(limit, onDone) {
+        function loadChatHistory(limit, onDone, before) {
+            historyLoading = true;
+            updateHistoryControls();
+
             const clampedLimit = Math.max(1, Math.min(200, Number(limit) || 50));
-            fetch(`${baseUrl}/admin/widget-history/?token=${token}&device=${encodeURIComponent(visitorId)}&limit=${clampedLimit}`)
+            let url = `${baseUrl}/admin/widget-history/?token=${token}&device=${encodeURIComponent(visitorId)}&limit=${clampedLimit}`;
+            if (before) {
+                url += `&before=${encodeURIComponent(before)}`;
+            }
+
+            fetch(url)
                 .then(res => res.json())
                 .then(payload => {
-                    if (payload && Array.isArray(payload.messages) && payload.messages.length) {
-                        const messagesDiv = document.getElementById('ichatbox-messages');
-                        // Keep whatever is currently visible (e.g. welcome/form) unless we're in chat mode.
-                        // If footer is visible, we consider this a chat UI.
-                        const footerDiv = document.getElementById('ichatbox-footer');
-                        if (footerDiv.style.display !== 'none') {
+                    const messagesDiv = document.getElementById('ichatbox-messages');
+                    const footerDiv = document.getElementById('ichatbox-footer');
+                    if (!messagesDiv) return;
+
+                    if (payload && Array.isArray(payload.messages)) {
+                        if (!before && footerDiv.style.display !== 'none') {
                             messagesDiv.innerHTML = '';
                         }
 
-                        payload.messages.forEach((msg) => {
-                            appendMessageToUI(msg.sender_type, msg.message, msg.created_at);
-                        });
+                        if (payload.messages.length) {
+                            if (before) {
+                                const currentScroll = messagesDiv.scrollTop;
+                                payload.messages.forEach((msg) => {
+                                    prependMessageToUI(msg.sender_type, msg.message, msg.created_at);
+                                });
+                                messagesDiv.scrollTop = currentScroll + 120 * payload.messages.length;
+                            } else {
+                                payload.messages.forEach((msg) => {
+                                    appendMessageToUI(msg.sender_type, msg.message, msg.created_at);
+                                });
+                            }
+                        }
+
+                        historyHasMore = Boolean(payload.has_more);
+                        historyCursor = payload.next_cursor || null;
+                        updateHistoryControls();
                     }
                 })
                 .catch(err => {
                     console.warn('IChatBox: Failed to load chat history.', err);
                 })
                 .finally(() => {
+                    historyLoading = false;
+                    updateHistoryControls();
                     if (typeof onDone === 'function') onDone();
                 });
+        }
+
+        function prependMessageToUI(senderType, message, createdAtIso) {
+            const messages = document.querySelector('#ichatbox-messages');
+            if (!messages) return;
+            const isMe = senderType === 'PARTICIPANT';
+            const alignSelf = isMe ? 'flex-end' : 'flex-start';
+            const alignText = isMe ? 'text-align: right;' : 'text-align: left;';
+            const label = isMe ? 'Bạn' : 'Hỗ trợ viên';
+            const time = createdAtIso ? new Date(createdAtIso) : new Date();
+            const timeString = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const bgStyle = isMe
+                ? 'background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border-radius: 18px 18px 2px 18px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);'
+                : 'background: #ffffff; color: #1e293b; border-radius: 18px 18px 18px 2px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);';
+
+            const html = `
+                <div class="ichatbox-msg-wrapper" style="align-self: ${alignSelf};">
+                    <span style="display: inline-block; padding: 10px 16px; max-width: 100%; word-wrap: break-word; font-size: 14px; line-height: 1.45; ${bgStyle}">
+                        ${message}
+                    </span>
+                    <span style="font-size: 9px; color: #94a3b8; margin-top: 4px; padding: 0 4px; ${alignText}">
+                        ${label} • ${timeString}
+                    </span>
+                </div>
+            `;
+            messages.insertAdjacentHTML('afterbegin', html);
         }
 
         // Hàm render biểu mẫu thu thập thông tin

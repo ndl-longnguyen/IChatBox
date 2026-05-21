@@ -18,7 +18,7 @@
     {% endif %}
     <div class="row">
         <!-- Account Info & Settings Column -->
-        <div class="col-md-5 mb-4">
+        <div class="col-md-12 mb-4">
             <!-- Account Info Card -->
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-primary text-white py-3">
@@ -68,13 +68,13 @@
                 <div class="card-body">
                     <form method="POST" action="{% url 'profile' %}">
                         {% csrf_token %}
-                        <div class="form-group mb-4">
                         <input type="hidden" name="action" value="update_widget">
-                        <label class="small text-muted font-weight-bold text-uppercase d-block mb-2" style="font-size: 11px; letter-spacing: 0.5px;">Chat Access Mode</label>
-                        <div class="custom-control custom-switch mb-3">
-                            <input type="checkbox" class="custom-control-input" id="allowAnonymous" name="allow_anonymous" style="cursor: pointer;" {% if user.customer_key.allow_anonymous %}checked{% endif %}>
-                            <label class="custom-control-label font-weight-bold text-dark" for="allowAnonymous" style="cursor: pointer;">Allow Anonymous Chat</label>
-                        </div>
+                        <div class="form-group mb-4">
+                            <label class="small text-muted font-weight-bold text-uppercase d-block mb-2" style="font-size: 11px; letter-spacing: 0.5px;">Chat Access Mode</label>
+                            <div class="custom-control custom-switch mb-3">
+                                <input type="checkbox" class="custom-control-input" id="allowAnonymous" name="allow_anonymous" style="cursor: pointer;" {% if user.customer_key.allow_anonymous %}checked{% endif %}>
+                                <label class="custom-control-label font-weight-bold text-dark" for="allowAnonymous" style="cursor: pointer;">Allow Anonymous Chat</label>
+                            </div>
                             <p class="text-muted small mb-0" style="line-height: 1.5;">
                                 <i class="fa fa-info-circle text-primary mr-1"></i>
                                 <strong>Enabled:</strong> Visitors can chat anonymously instantly (as Guest).<br>
@@ -82,59 +82,43 @@
                                 <strong>Disabled:</strong> Visitors must fill in their name and email/phone number to start chatting.
                             </p>
                         </div>
+                        <hr>
+                        <div class="form-group mb-3">
+                            <div class="custom-control custom-switch mb-3">
+                                <input type="checkbox" class="custom-control-input" id="showSocialLinks" name="show_social_links" style="cursor: pointer;" {% if user.customer_key.show_social_links %}checked{% endif %}>
+                                <label class="custom-control-label font-weight-bold text-dark" for="showSocialLinks" style="cursor: pointer;">Show social contact icons on website</label>
+                            </div>
+                            <p class="text-muted small mb-0" style="line-height: 1.5;">
+                                <i class="fa fa-info-circle text-primary mr-1"></i>
+                                When enabled, Facebook / Zalo / Phone icons appear near the chat toggle on the integrated website.
+                            </p>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="small text-muted font-weight-bold text-uppercase">Facebook Link</label>
+                            <input type="url" name="social_facebook" class="form-control" placeholder="https://facebook.com/yourpage" value="{{ user.customer_key.social_facebook }}">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="small text-muted font-weight-bold text-uppercase">Zalo Link or Number</label>
+                            <input type="text" name="social_zalo" class="form-control" placeholder="Zalo phone or URL" value="{{ user.customer_key.social_zalo }}">
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="small text-muted font-weight-bold text-uppercase">Phone Number</label>
+                            <input type="tel" name="social_phone" class="form-control" placeholder="+84901234567" value="{{ user.customer_key.social_phone }}">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="small text-muted font-weight-bold text-uppercase">Chat Widget Position</label>
+                            <select name="widget_position" class="form-control">
+                                <option value="bottom-right" {% if user.customer_key.widget_position == 'bottom-right' %}selected{% endif %}>Bottom Right (default)</option>
+                                <option value="bottom-left" {% if user.customer_key.widget_position == 'bottom-left' %}selected{% endif %}>Bottom Left</option>
+                                <option value="top-right" {% if user.customer_key.widget_position == 'top-right' %}selected{% endif %}>Top Right</option>
+                                <option value="top-left" {% if user.customer_key.widget_position == 'top-left' %}selected{% endif %}>Top Left</option>
+                            </select>
+                            <small class="text-muted d-block mt-2">If empty, widget stays at default bottom-right.</small>
+                        </div>
                         <button type="submit" class="btn btn-primary btn-block py-2" style="border-radius: 10px; font-weight: 600; font-size: 14px;">
                             Save Settings <i class="fa fa-save ml-1"></i>
                         </button>
                     </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- License & Integration Card -->
-        <div class="col-md-7 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-success text-white py-3">
-                    <h5 class="card-title mb-0"><i class="fa fa-code mr-2"></i>License & Website Integration</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <label class="small text-success font-weight-bold text-uppercase d-block">Your Public License Key</label>
-                        {% if user.customer_key %}
-                            <div class="input-group">
-                                <input type="text" id="licenseKey" class="form-control font-weight-bold text-success bg-light" readonly value="{{ user.customer_key.key }}">
-                                <div class="input-group-append">
-                                    <button class="btn btn-success" type="button" onclick="copyToClipboard('licenseKey', this)">
-                                        <i class="fa fa-copy"></i> Copy
-                                    </button>
-                                </div>
-                            </div>
-                        {% else %}
-                            <div class="alert alert-warning py-2 mb-0">
-                                <i class="fa fa-exclamation-triangle mr-2"></i> No active license key found. Please contact support.
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <hr>
-
-                    <h6 class="font-weight-bold text-dark mb-3"><i class="fa fa-rocket mr-2"></i>Quick Integration Guide</h6>
-                    <p class="text-muted small">
-                        To add the chatbox widget to your website, copy and paste the following HTML snippet right before the closing <code>&lt;/body&gt;</code> tag of your webpages:
-                    </p>
-
-                    <div class="position-relative">
-                        <pre class="bg-dark text-light p-3 rounded small font-family-monospace" id="codeSnippet" style="max-height: 250px; overflow-y: auto;">&lt;!-- IChatBox Live Support Widget --&gt;
-&lt;script src="http://localhost:8002/static/ichatbox.js"&gt;&lt;/script&gt;
-&lt;script&gt;
-    IChatBox({
-        token: "{{ user.customer_key.key|default:'YOUR_LICENSE_KEY' }}",
-        username: "Guest_" + Math.floor(Math.random() * 1000)
-    });
-&lt;/script&gt;</pre>
-                        <button class="btn btn-sm btn-outline-light position-absolute" style="top: 10px; right: 10px;" onclick="copyTextById('codeSnippet', this)">
-                            <i class="fa fa-copy mr-1"></i> Copy Code
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
