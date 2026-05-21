@@ -1,51 +1,62 @@
 # IChatBox
-IChatBox is a user-friendly chat solution designed for easy integration into existing websites. It offers seamless real-time communication, is highly customizable, and enhances user engagement with minimal setup. Ideal for adding interactive features to any site.
+IChatBox is a multi-website chatbox platform designed to be embedded into external websites via a license key. It provides a tenant admin UI to respond to chats in real time, and a super admin UI to manage all tenants.
 
 ## Specs
 - `docs/SPECS.md`
 - `docs/PACKAGES.md`
 
-# Run step:
-## 1. Clone the repository
+## Docker Compose (Recommended)
+Run locally with PostgreSQL + Redis:
+```bash
+docker compose up --build
+```
+
+URLs:
+- Tenant admin login: `http://127.0.0.1:8002/admin/login/`
+- Tenant live chat: `http://127.0.0.1:8002/admin/chat/`
+- Tenant widget settings: `http://127.0.0.1:8002/admin/profile/`
+- Super admin (Django Admin): `http://127.0.0.1:8002/supper-admin/`
+
+Database in compose uses PostgreSQL (persistent volume `postgres_data`).
+
+## Run Without Docker (SQLite)
+### 1. Clone the repository
 ```bash
 git clone https://github.com/yourusername/IChatBox.git
 cd IChatBox
 ```
-## 2. Set up a virtual environment
+### 2. Set up a virtual environment
 ```bash
 python3 -m venv venv
 source venv/bin/activate # On Windows, use `venv\Scripts\activate`
 ```
-## 3. Install dependencies
+### 3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-## 4. Set up environment variables
-Create a .env file in the root of your project, and define your environment-specific variables such as:
+### 4. Environment variables
+Create a `.env` file in the repo root:
 
 ```bash
-SECRET_KEY=your-secret-key
+SECRET_KEY=change-me
 DEBUG=True
 ```
-## 5. Apply migrations
+### 5. Apply migrations
 ```bash
 python manage.py migrate
 ```
-## 6. Create a superuser (optional but recommended for admin access)
+### 6. Create a superuser (optional)
 ```bash
 python manage.py createsuperuser
 ```
-## 7. Run the development server
+### 7. Run the development server
 ```bash
 python manage.py runserver
 ```
-## 8. Access the chatbox
-Open your browser and go to http://localhost:8000/ to see the IChatBox in action.
+### 8. Open the admin UI
+- Tenant admin: `http://127.0.0.1:8002/admin/login/`
+- Super admin: `http://127.0.0.1:8002/supper-admin/`
 
-## Super admin
-- Django Admin: `http://127.0.0.1:8002/supper-admin/`
-
-## Tenant admin
-- Login: `http://127.0.0.1:8002/admin/login/`
-- Chat UI: `http://127.0.0.1:8002/admin/chat/`
-- Widget settings: `http://127.0.0.1:8002/admin/profile/`
+## Notes
+- Widget endpoints are exposed under `/admin/widget-config/` and `/admin/widget-history/` and are designed to be embedded on external domains (CORS enabled).
+- WebSocket endpoints are exposed under `/ws/user/chat/` (visitor) and `/ws/admin/chat/` (tenant admin).
