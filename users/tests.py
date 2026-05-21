@@ -97,3 +97,89 @@ class WidgetHistoryTests(TestCase):
         payload = resp.json()
         self.assertEqual(len(payload["messages"]), 1)
         self.assertEqual(payload["messages"][0]["message"], "Second")
+
+    def test_widget_history_supports_cursor_pagination(self):
+        second = ChatMessage.objects.create(
+            chat_room=self.room_a,
+            sender_type="PARTICIPANT",
+            content="Second",
+        )
+
+        resp = self.client.get(
+            reverse("widget_history"),
+            {"token": str(self.key_a.key), "device": "device-1", "limit": 1},
+        )
+        self.assertEqual(resp.status_code, 200)
+        payload = resp.json()
+        self.assertTrue(payload["has_more"])
+        self.assertEqual(len(payload["messages"]), 1)
+        self.assertEqual(payload["messages"][0]["message"], "Second")
+        self.assertEqual(payload["next_cursor"], payload["messages"][0]["id"])
+
+        cursor = payload["next_cursor"]
+        resp2 = self.client.get(
+            reverse("widget_history"),
+            {
+                "token": str(self.key_a.key),
+                "device": "device-1",
+                "limit": 1,
+                "before": cursor,
+            },
+        )
+        self.assertEqual(resp2.status_code, 200)
+        payload2 = resp2.json()
+        self.assertFalse(payload2["has_more"])
+        self.assertEqual(len(payload2["messages"]), 1)
+        self.assertEqual(payload2["messages"][0]["message"], "Hello")
+
+    def test_room_history_requires_login(self):
+        resp = self.client.get(
+            reverse("room_history"),
+            {"room": str(self.room_a.id), "limit": 10},
+        )
+        self.assertEqual(resp.status_code, 302)
+
+    def test_room_history_pagination(self):
+        self.client.force_login(self.user_a)
+        first = ChatMessage.objects.create(
+            chat_room=self.room_a,
+            sender_type="PARTICIPANT",
+            content="First",
+        )
+        second = ChatMessage.objects.create(
+            chat_room=self.room_a,
+            sender_type="USER",
+            content="Second",
+        )
+
+        resp = self.client.get(
+            reverse("room_history"),
+            {"room": str(self.room_a.id), "limit": 1},
+        )
+        self.assertEqual(resp.status_code, 200)
+        payload = resp.json()
+        self.assertTrue(payload["has_more"])
+        self.assertEqual(len(payload["messages"]), 1)
+        self.assertEqual(payload["messages"][0]["message"], "Second")
+
+        cursor = payload["next_cursor"]
+        resp2 = self.client.get(
+            reverse("room_history"),
+            {"room": str(self.room_a.id), "limit": 1, "before": cursor},
+        )
+        self.assertEqual(resp2.status_code, 200)
+        payload2 = resp2.json()
+        self.assertTrue(payload2["has_more"])
+        self.assertEqual(len(payload2["messages"]), 1)
+        self.assertEqual(payload2["messages"][0]["message"], "First")
+
+        cursor2 = payload2["next_cursor"]
+        resp3 = self.client.get(
+            reverse("room_history"),
+            {"room": str(self.room_a.id), "limit": 1, "before": cursor2},
+        )
+        self.assertEqual(resp3.status_code, 200)
+        payload3 = resp3.json()
+        self.assertFalse(payload3["has_more"])
+        self.assertEqual(len(payload3["messages"]), 1)
+        self.assertEqual(payload3["messages"][0]["message"], "Hello")

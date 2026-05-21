@@ -69,8 +69,6 @@
         }
 
         .admin-container {
-            max-width: 1400px;
-            margin: 0 auto;
             padding: 24px;
         }
 
@@ -96,7 +94,10 @@
                         <a class="nav-link" href="{% url 'chat' %}"><i class="fa fa-comments-o mr-1"></i>Chat Live</a>
                     </li>
                     <li class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-                        <a class="nav-link" href="{% url 'profile' %}"><i class="fa fa-cog mr-1"></i>Settings & Integration</a>
+                        <a class="nav-link" href="{% url 'profile' %}"><i class="fa fa-cog mr-1"></i>Settings</a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'integration' %}active{% endif %}">
+                        <a class="nav-link" href="{% url 'integration' %}"><i class="fa fa-code mr-1"></i>Integration</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}"><i class="fa fa-sign-out mr-1"></i>Logout</a>

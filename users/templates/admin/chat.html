@@ -47,14 +47,136 @@
         margin-right: 10px;
     }
 
+    @media (max-width: 1024px) {
+        .chat-app {
+            flex-direction: column;
+            min-height: calc(100vh - 92px);
+            height: auto;
+        }
+
+        .people-list {
+            width: 100%;
+            max-width: none;
+            border-right: none !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+        }
+
+        .chat {
+            width: 100%;
+        }
+
+        .chat-history {
+            padding: 18px !important;
+        }
+
+        .chat-header,
+        .chat-message {
+            padding: 14px 18px !important;
+        }
+    }
+
     @media (max-width: 767px) {
         .plist-toggle {
             display: inline-flex;
         }
-
+        /* Make the rooms toggle easier to tap on touch devices */
+        .plist-toggle {
+            width: 48px !important;
+            height: 48px !important;
+            padding: 0 !important;
+            justify-content: center !important;
+            align-items: center !important;
+            border-radius: 12px !important;
+        }
         .chat-app {
             height: calc(100vh - 92px);
             border-radius: 14px !important;
+            overflow: visible;
+        }
+        /* Make the people-list an off-canvas panel on mobile */
+        .people-list {
+            position: fixed;
+            left: -100%;
+            top: 92px;
+            width: 84%;
+            max-width: 360px;
+            height: calc(100vh - 112px);
+            z-index: 11001;
+            box-shadow: 0 12px 40px rgba(2,6,23,0.12);
+            background: #ffffff;
+            transition: left 0.25s ease;
+            overflow-y: auto;
+            border-right: 1px solid #f1f5f9 !important;
+            padding: 16px !important;
+        }
+
+        .plist-backdrop { z-index: 11000; }
+
+        .people-list .chat-list li {
+            padding: 14px 12px !important;
+            margin-bottom: 8px;
+        }
+
+        .people-list .name {
+            font-size: 15px;
+        }
+
+        .people-list .status {
+            font-size: 12px;
+        }
+
+        .chat-header .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .chat-header .col-lg-6 {
+            width: 100%;
+        }
+
+        .chat-header .text-right {
+            text-align: left !important;
+        }
+
+        .chat-header .btn-outline-secondary,
+        .chat-header .btn-outline-primary,
+        .chat-header .btn-outline-info,
+        .chat-header .btn-outline-warning {
+            width: 38px;
+            height: 38px;
+            margin-left: 4px;
+        }
+
+        .chat-history {
+            padding: 16px !important;
+        }
+
+        .chat-history .chat-content {
+            gap: 14px;
+        }
+
+        .chat-history .other-message,
+        .chat-history .my-message {
+            max-width: 100%;
+        }
+
+        .chat-message {
+            padding: 12px 16px !important;
+        }
+
+        .chat-message .input-group {
+            gap: 8px;
+        }
+
+        .chat-message .ichatbox-input {
+            padding: 10px 14px !important;
+            font-size: 15px;
+        }
+
+        .chat-message .send-message {
+            width: 44px;
+            height: 44px;
         }
     }
 
@@ -427,7 +549,7 @@
                     <ul class="list-unstyled chat-list mt-2 mb-0">
                         {% for room in rooms %}
                             <li class="clearfix">
-                                <a href="{% url 'chat' %}?room={{ room.id }}">
+                                <a href="{% url 'chat' %}?room={{ room.id }}" data-room-id="{{ room.id }}">
                                     <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
                                     <div class="about">
                                         <div class="name">{{ room.participant.name }}</div>
@@ -436,6 +558,9 @@
                                             {{ room.chat_messages.last.created_at|date:"h:i A, d/m/Y" }}
                                         </div>
                                     </div>
+                                    {% if room.unread_count and room.unread_count > 0 %}
+                                        <span class="badge badge-primary ml-2 unread-badge">{{ room.unread_count }}</span>
+                                    {% endif %}
                                 </a>
                             </li>
                         {% endfor %}
@@ -464,7 +589,11 @@
                                                 {% if room.participant.phone %}<span class="mx-2">|</span><i class="fa fa-phone mr-1"></i>{{ room.participant.phone }}{% endif %}
                                             </small>
                                         {% endif %}
-                                        <small class="d-block mt-1">Last seen: {{ messages.last.created_at|date:"h:i A, d/m/Y" }}</small>
+                                        {% if messages and messages.last %}
+                                            <small class="d-block mt-1">Last seen: {{ messages.last.created_at|date:"h:i A, d/m/Y" }}</small>
+                                        {% else %}
+                                            <small class="d-block mt-1">No activity yet</small>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="col-lg-6 text-right">
@@ -479,11 +608,14 @@
 
                         {% block chat_history %}
                         <!-- Chat history -->
+                        <div id="load-more-bar" class="text-center py-2" style="display: {% if show_load_more %}block{% else %}none{% endif %};">
+                            <button id="load-older-messages" class="btn btn-sm btn-outline-primary">Load older messages</button>
+                        </div>
                         <div class="chat-history">
-                            <ul class="m-b-0 chat-content">
+                            <ul class="m-b-0 chat-content" data-first-message-id="{% if messages %}{{ messages.0.id }}{% endif %}">
                                 {% for message in messages %}
                                     {% if message.sender_type != "USER" %}
-                                    <li class="clearfix">
+                                    <li class="clearfix" data-message-id="{{ message.id }}">
                                         <div class="message-data text-right">
                                             <span class="message-data-time">{{ message.created_at|date:"h:i A, d/m/Y" }}</span>
                                             <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
@@ -491,7 +623,7 @@
                                         <div class="message other-message float-right">{{ message.content }}</div>
                                     </li>
                                     {% else %}
-                                    <li class="clearfix">
+                                    <li class="clearfix" data-message-id="{{ message.id }}">
                                         <div class="message-data">
                                             <span class="message-data-time">{{ message.created_at|date:"h:i A, d/m/Y" }}</span>
                                         </div>
@@ -519,6 +651,15 @@
                 {% else %}
                     <!-- UI when no chat room is selected -->
                     <div class="chat">
+                        <div class="chat-header clearfix mb-0">
+                            <div class="row w-200">
+                                <div class="col-12 d-flex align-items-center justify-content-between">
+                                    <button id="plist-toggle" class="plist-toggle" type="button">
+                                        <i class="fa fa-bars"></i> Rooms
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="text-center p-5">
                             <h5>Please select a chat room to start messaging.</h5>
                         </div>
@@ -567,7 +708,109 @@ function scrollToBottom() {
     }
 }
 
+function getEarliestRoomMessageId() {
+    const messagesList = document.querySelector('.chat-content');
+    return messagesList ? messagesList.dataset.firstMessageId || null : null;
+}
+
+function updateLoadMoreButton(visible) {
+    const bar = document.getElementById('load-more-bar');
+    if (!bar) return;
+    bar.style.display = visible ? 'block' : 'none';
+}
+
+function prependAdminMessageToUI(senderType, message, createdAtIso) {
+    const messages = document.querySelector('.chat-content');
+    if (!messages) return;
+    const isMe = senderType === 'USER';
+    const alignSelf = isMe ? 'flex-start' : 'flex-end';
+    const label = isMe ? 'Hỗ trợ viên' : 'Bạn';
+    const time = createdAtIso ? new Date(createdAtIso) : new Date();
+    const timeString = formatTime(time);
+    const bubbleClass = isMe ? 'my-message' : 'other-message float-right';
+    const avatarHtml = isMe
+        ? ''
+        : '<img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">';
+
+    const itemHtml = `
+        <li class="clearfix" data-message-id="${Math.random().toString(36).slice(2, 10)}">
+            <div class="message-data ${isMe ? '' : 'text-right'}">
+                <span class="message-data-time">${timeString}</span>
+                ${avatarHtml}
+            </div>
+            <div class="message ${bubbleClass}">${message}</div>
+        </li>`;
+    messages.insertAdjacentHTML('afterbegin', itemHtml);
+}
+
+function loadRoomHistory(limit, before) {
+    if (!chat_room_id) return;
+    const button = document.getElementById('load-older-messages');
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Loading...';
+    }
+
+    let url = `?room=${encodeURIComponent(chat_room_id)}&limit=${limit}`;
+    if (before) {
+        url += `&before=${encodeURIComponent(before)}`;
+    }
+
+    fetch(`/admin/room-history/${url}`)
+        .then(res => res.json())
+        .then(payload => {
+            if (!payload || !Array.isArray(payload.messages)) return;
+            const messagesList = document.querySelector('.chat-content');
+            if (!messagesList) return;
+
+            const previousScroll = messagesList.scrollHeight;
+            const orderedMessages = payload.messages.slice().reverse();
+            orderedMessages.forEach((msg) => {
+                const isUser = msg.sender_type === 'USER';
+                const bubbleHtml = isUser
+                    ? `<li class="clearfix" data-message-id="${msg.id}">\n                        <div class="message-data">\n                            <span class="message-data-time">${formatTime(new Date(msg.created_at))}</span>\n                        </div>\n                        <div class="message my-message">${msg.message}</div>\n                    </li>`
+                    : `<li class="clearfix" data-message-id="${msg.id}">\n                        <div class="message-data text-right">\n                            <span class="message-data-time">${formatTime(new Date(msg.created_at))}</span>\n                            <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">\n                        </div>\n                        <div class="message other-message float-right">${msg.message}</div>\n                    </li>`;
+                messagesList.insertAdjacentHTML('afterbegin', bubbleHtml);
+            });
+
+            if (payload.messages.length) {
+                messagesList.dataset.firstMessageId = payload.messages[0].id;
+            }
+
+            updateLoadMoreButton(Boolean(payload.has_more));
+            if (!payload.has_more) {
+                const bar = document.getElementById('load-more-bar');
+                if (bar) bar.style.display = 'none';
+            }
+
+            const newScroll = messagesList.scrollHeight;
+            const scrollContainer = messagesList.closest('.chat-history');
+            if (scrollContainer) {
+                scrollContainer.scrollTop = newScroll - previousScroll;
+            }
+        })
+        .catch((error) => {
+            console.error('Failed to load room history', error);
+        })
+        .finally(() => {
+            if (button) {
+                button.disabled = false;
+                button.textContent = 'Load older messages';
+            }
+        });
+}
+
 scrollToBottom();
+
+const loadMoreButton = document.getElementById('load-older-messages');
+if (loadMoreButton) {
+    loadMoreButton.addEventListener('click', () => {
+        const beforeId = getEarliestRoomMessageId();
+        if (beforeId) {
+            loadRoomHistory(50, beforeId);
+        }
+    });
+}
 
 // Establish WebSocket connection (always connect to receive new room notifications)
 const wsUrl = `ws://127.0.0.1:8002/ws/admin/chat/?token={{ user.token }}&username={{ user.first_name }}{{ user.last_name }}` + (chat_room_id ? `&room=${chat_room_id}` : '');
@@ -634,6 +877,14 @@ chatSocket.onmessage = function (e) {
                 </a>
             `;
             chatList.prepend(li);
+            // mark as unread for admin
+            const anchor = li.querySelector('a');
+            if (anchor) {
+                const badge = document.createElement('span');
+                badge.className = 'badge badge-primary ml-2 unread-badge';
+                badge.textContent = '1';
+                anchor.appendChild(badge);
+            }
         }
         return;
     }
@@ -668,6 +919,25 @@ chatSocket.onmessage = function (e) {
 
             // Cuộn xuống cuối
             scrollToBottom();
+        } else {
+            // Update unread badge for the room that received the message
+            try {
+                const roomLink = document.querySelector(`a[data-room-id="${data.chat_room_id}"]`);
+                if (roomLink) {
+                    let badge = roomLink.querySelector('.unread-badge');
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'badge badge-primary ml-2 unread-badge';
+                        badge.textContent = '1';
+                        roomLink.appendChild(badge);
+                    } else {
+                        const n = parseInt(badge.textContent || '0', 10) + 1;
+                        badge.textContent = String(n);
+                    }
+                }
+            } catch (err) {
+                // ignore UI update errors
+            }
         }
     }
 };

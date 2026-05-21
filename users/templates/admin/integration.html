@@ -1,0 +1,93 @@
+{% extends "includes/master.html" %}
+
+{% block title %}IChatBox Integration{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="row">
+        <div class="col-md-10 offset-md-1 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="card-title mb-0"><i class="fa fa-code mr-2"></i>License & Website Integration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label class="small text-success font-weight-bold text-uppercase d-block">Your Public License Key</label>
+                        {% if user.customer_key %}
+                            <div class="input-group">
+                                <input type="text" id="licenseKey" class="form-control font-weight-bold text-success bg-light" readonly value="{{ user.customer_key.key }}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-success" type="button" onclick="copyToClipboard('licenseKey', this)">
+                                        <i class="fa fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning py-2 mb-0">
+                                <i class="fa fa-exclamation-triangle mr-2"></i> No active license key found. Please contact support.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <h6 class="font-weight-bold text-dark mb-3"><i class="fa fa-rocket mr-2"></i>Quick Integration Guide</h6>
+                    <p class="text-muted small">
+                        To add the chatbox widget to your website, copy and paste the following HTML snippet right before the closing <code>&lt;/body&gt;</code> tag of your webpages:
+                    </p>
+
+                    <div class="position-relative">
+                        <pre class="bg-dark text-light p-3 rounded small font-family-monospace" id="codeSnippet" style="max-height: 250px; overflow-y: auto;">&lt;!-- IChatBox Live Support Widget --&gt;
+&lt;script src="http://localhost:8002/static/ichatbox.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    IChatBox({
+        token: "{{ user.customer_key.key|default:'YOUR_LICENSE_KEY' }}",
+        username: "Guest_" + Math.floor(Math.random() * 1000)
+    });
+&lt;/script&gt;</pre>
+                        <button class="btn btn-sm btn-outline-light position-absolute" style="top: 10px; right: 10px;" onclick="copyTextById('codeSnippet', this)">
+                            <i class="fa fa-copy mr-1"></i> Copy Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(inputId, button) {
+    const input = document.getElementById(inputId);
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa fa-check"></i> Copied!';
+        button.classList.remove('btn-success');
+        button.classList.add('btn-dark');
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-dark');
+            button.classList.add('btn-success');
+        }, 2000);
+    });
+}
+
+function copyTextById(elementId, button) {
+    const element = document.getElementById(elementId);
+    const text = element.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa fa-check"></i> Copied!';
+        button.classList.remove('btn-outline-light');
+        button.classList.add('btn-success');
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-light');
+        }, 2000);
+    });
+}
+</script>
+
+{% endblock content %}

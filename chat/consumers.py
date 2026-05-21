@@ -127,6 +127,18 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
                 },
             )
 
+            # Notify the admin UI in real time without subscribing the admin to every room group
+            admin_group_name = f"admin_{self.customer_user.token}"
+            await self.channel_layer.group_send(
+                admin_group_name,
+                {
+                    "type": "chat_message",
+                    "message": message,
+                    "sender_type": "PARTICIPANT",
+                    "chat_room_id": str(self.chat_room.id),
+                },
+            )
+
     async def chat_message(self, event):
         # Send the message to the WebSocket
         await self.send(
@@ -217,16 +229,6 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
             self.room_group_admin_name, self.channel_name
         )
 
-        # Get all existing chat rooms for this admin user
-        self.chat_rooms = await self.get_all_chat_rooms()
-
-        # Add admin to all their chat room groups
-        for room_id in self.chat_rooms:
-            room_group_name = f"chat_room_{room_id}"
-            await self.channel_layer.group_add(
-                room_group_name, self.channel_name
-            )
-
         # Accept the WebSocket connection
         await self.accept()
 
@@ -236,14 +238,6 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_discard(
                 self.room_group_admin_name, self.channel_name
             )
-
-        # Remove admin from all chat room groups
-        if hasattr(self, "chat_rooms"):
-            for room_id in self.chat_rooms:
-                room_group_name = f"chat_room_{room_id}"
-                await self.channel_layer.group_discard(
-                    room_group_name, self.channel_name
-                )
 
     async def receive(self, text_data):
         # Parse the received message
@@ -255,9 +249,20 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
             # Save the message
             await self.create_message(chat_room_id, message)
 
-            # Broadcast the message to the chat room group
+            # Broadcast the message to the chat room group so the participant receives it
             await self.channel_layer.group_send(
                 f"chat_room_{chat_room_id}",
+                {
+                    "type": "chat_message",
+                    "message": message,
+                    "sender_type": "USER",
+                    "chat_room_id": chat_room_id,
+                },
+            )
+
+            # Notify all connected admin sockets about the outgoing message
+            await self.channel_layer.group_send(
+                self.room_group_admin_name,
                 {
                     "type": "chat_message",
                     "message": message,
