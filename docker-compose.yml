@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-ichatbox}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ichatbox}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5435}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -14,13 +14,13 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     restart: unless-stopped
 
   web:
     build: .
     ports:
-      - "8002:8002"
+      - "${WEB_PORT:-8002}:8002"
     environment:
       SECRET_KEY: ${SECRET_KEY:-SECRET_KEY}
       DEBUG: ${DEBUG:-True}
