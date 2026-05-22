@@ -15,9 +15,33 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import include, path, re_path
 
 urlpatterns = [
     path("supper-admin/", admin.site.urls),
     path("admin/", include("users.urls")),
 ]
+
+urlpatterns += staticfiles_urlpatterns()
+
+# Always-on fallback static serving for ASGI/Daphne without an external web server.
+# This keeps `/static/...` working even when DEBUG is misconfigured.
+from django.contrib.staticfiles import finders
+from django.http import FileResponse, Http404
+
+
+def _static_serve(request, path):
+    absolute = finders.find(path)
+    if not absolute:
+        raise Http404()
+    return FileResponse(open(absolute, "rb"))
+
+
+urlpatterns += [
+    re_path(r"static/(?P<path>.*)", _static_serve),
+]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

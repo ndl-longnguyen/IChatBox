@@ -33,22 +33,27 @@
 
                     <h6 class="font-weight-bold text-dark mb-3"><i class="fa fa-rocket mr-2"></i>Quick Integration Guide</h6>
                     <p class="text-muted small">
-                        To add the chatbox widget to your website, copy and paste the following HTML snippet right before the closing <code>&lt;/body&gt;</code> tag of your webpages:
+                        To add the chatbox widget to your website, copy and paste the following HTML snippet right before the closing <code>&lt;/body&gt;</code> tag.
                     </p>
+                    <div class="alert alert-warning border-0 py-2 px-3 small mb-3" style="border-radius: 10px; background-color: #fffbeb; color: #92400e;">
+                        <i class="fa fa-warning mr-1"></i>
+                        Use the <strong>Public License Key</strong> below. Do not embed your admin login token.
+                    </div>
 
                     <div class="position-relative">
                         <pre class="bg-dark text-light p-3 rounded small font-family-monospace" id="codeSnippet" style="max-height: 250px; overflow-y: auto;">&lt;!-- IChatBox Live Support Widget --&gt;
-&lt;script src="http://localhost:8002/static/ichatbox.js"&gt;&lt;/script&gt;
-&lt;script&gt;
-    IChatBox({
-        token: "{{ user.customer_key.key|default:'YOUR_LICENSE_KEY' }}",
-        username: "Guest_" + Math.floor(Math.random() * 1000)
-    });
+&lt;script
+  src="http://localhost:8002/static/ichatbox.js"
+  data-widget-key="{{ user.customer_key.key|default:'YOUR_LICENSE_KEY' }}"
+  defer&gt;
 &lt;/script&gt;</pre>
                         <button class="btn btn-sm btn-outline-light position-absolute" style="top: 10px; right: 10px;" onclick="copyTextById('codeSnippet', this)">
                             <i class="fa fa-copy mr-1"></i> Copy Code
                         </button>
                     </div>
+                    <p class="text-muted small mt-3 mb-0">
+                        Optional attributes: <code>data-username</code> (default guest name). Aliases supported: <code>data-license-key</code>, <code>data-api-key</code>.
+                    </p>
                 </div>
             </div>
         </div>

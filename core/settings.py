@@ -29,6 +29,25 @@ DEBUG = os.getenv("DEBUG", "True").lower() in ("1", "true", "yes", "y", "on")
 
 ALLOWED_HOSTS = ["*"]
 
+# Cache backend (used by DRF throttling + any rate limiting).
+# Prefer Redis when REDIS_URL is set (docker-compose already provides it),
+# otherwise fallback to local memory cache for dev.
+_CACHE_REDIS_URL = os.getenv("REDIS_URL")
+if _CACHE_REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _CACHE_REDIS_URL,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "ichatbox",
+        }
+    }
+
 
 # Application definition
 
@@ -177,6 +196,14 @@ LANGUAGES = [
 LOCALE_PATHS = [
     str(BASE_DIR / "locale"),
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_RATES": {
+        # Public widget endpoints (tune as needed)
+        "widget_ip": "120/min",
+        "widget_token": "60/min",
+    }
+}
 
 
 # Static files (CSS, JavaScript, Images)

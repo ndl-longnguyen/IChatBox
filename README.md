@@ -60,3 +60,15 @@ python manage.py runserver
 ## Notes
 - Widget endpoints are exposed under `/admin/widget-config/` and `/admin/widget-history/` and are designed to be embedded on external domains (CORS enabled).
 - WebSocket endpoints are exposed under `/ws/user/chat/` (visitor) and `/ws/admin/chat/` (tenant admin).
+
+## Widget Integration Snippet
+You can integrate without writing inline JavaScript by using `data-*` attributes:
+```html
+<script
+  src="https://yourdomain.com/static/ichatbox.js"
+  data-api-key="YOUR_PUBLIC_LICENSE_KEY_UUID"
+  data-username="Guest_123"
+  defer>
+</script>
+```
+Recommended attribute name is `data-widget-key` (aliases supported: `data-license-key`, `data-api-key`).
