@@ -5,6 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from ai.models import KnowledgeChunk, KnowledgeDocument
 from ai.services import (
     build_structured_reply,
+    build_general_assistant_reply,
     create_manual_knowledge_document,
     delete_knowledge_document,
     normalize_knowledge_content,
@@ -47,6 +48,11 @@ class KnowledgeParsingTests(SimpleTestCase):
         self.assertIn("SOARIG VIETNAM Co., Ltd.", reply)
         self.assertIn("Mobile App Development", reply)
         self.assertIn("info@soarig.vn", reply)
+        self.assertNotIn("support@companyname.com", reply)
+
+    def test_general_assistant_reply_is_natural_for_vague_messages(self):
+        reply = build_general_assistant_reply("???", language="vi")
+        self.assertTrue(reply)
         self.assertNotIn("support@companyname.com", reply)
 
 

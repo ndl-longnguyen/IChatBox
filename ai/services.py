@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import logging
@@ -6,6 +7,7 @@ import socket
 import unicodedata
 import urllib.error
 import urllib.request
+from random import Random
 
 from django.conf import settings
 from django.db.models import Q
@@ -21,6 +23,7 @@ from ai.models import (
 from chat.models import ChatMessage, ChatRoom
 
 logger = logging.getLogger(__name__)
+_rng = Random(0)
 
 
 SUPPORTED_FILE_EXTENSIONS = {".txt", ".md", ".markdown", ".csv", ".json"}
@@ -47,6 +50,8 @@ SEARCH_SYNONYMS = {
     "du an": ["project", "projects", "portfolio"],
     "san pham": ["product", "products"],
     "dich vu": ["service", "services", "solution", "solutions"],
+    "gia": ["price", "pricing", "cost", "fee"],
+    "bang gia": ["pricing", "price list", "plan", "plans"],
 }
 
 
@@ -85,6 +90,95 @@ def _normalize_search_text(value):
         char for char in normalized if not unicodedata.combining(char)
     )
     return without_accents.lower()
+
+
+def _normalize_user_text(value):
+    return re.sub(r"\s+", " ", (value or "").strip())
+
+
+def _tokenize_user_text(value):
+    normalized = _normalize_search_text(value)
+    return re.findall(r"[a-z0-9]+", normalized)
+
+
+def _is_greeting_message(message):
+    normalized = _normalize_search_text(message)
+    return any(
+        phrase in normalized
+        for phrase in [
+            "xin chao",
+            "chao",
+            "hello",
+            "hi",
+            "hey",
+            "good morning",
+            "good afternoon",
+            "good evening",
+        ]
+    )
+
+
+def _is_meaningless_message(message):
+    text = _normalize_user_text(message)
+    if not text:
+        return True
+    if len(text) <= 3:
+        return True
+    if re.fullmatch(r"[\W_]+", text):
+        return True
+    if re.fullmatch(r"(ha|haha|hihi|kk|lol)+", _normalize_search_text(text)):
+        return True
+    tokens = _tokenize_user_text(text)
+    # Very short with no meaningful tokens.
+    return len(tokens) <= 1 and len(text) <= 10
+
+
+def _is_vague_question(message):
+    normalized = _normalize_search_text(message)
+    tokens = _tokenize_user_text(message)
+    if len(tokens) <= 3:
+        return True
+    if any(
+        phrase in normalized
+        for phrase in [
+            "giup",
+            "tu van",
+            "hoi",
+            "thong tin",
+            "ban co the",
+            "co ai",
+            "support",
+            "help",
+        ]
+    ):
+        return True
+    return False
+
+
+def build_general_assistant_reply(visitor_message, language="vi"):
+    message = _normalize_user_text(visitor_message)
+    if _is_greeting_message(message):
+        if language == "vi":
+            return "Xin chào. Mình có thể hỗ trợ bạn vấn đề gì ạ?"
+        return "Hello. How can I help you today?"
+
+    if _is_meaningless_message(message) or _is_vague_question(message):
+        vi_options = [
+            "Mình chưa rõ bạn đang cần hỗ trợ vấn đề gì. Bạn mô tả cụ thể hơn giúp mình được không ạ?",
+            "Bạn vui lòng gửi lại câu hỏi rõ hơn (ví dụ: bạn quan tâm sản phẩm nào, nhu cầu gì, hoặc bạn đang gặp lỗi gì) để mình hỗ trợ nhanh hơn nhé.",
+            "Mình chưa nắm đủ thông tin. Bạn cho mình biết mục tiêu của bạn là gì và bạn đang ở bước nào được không ạ?",
+        ]
+        en_options = [
+            "I’m not sure what you mean yet. Could you clarify what you need help with?",
+            "Could you restate your question with a bit more detail (what you’re trying to do, and what’s not working)?",
+            "I don’t have enough context. Tell me your goal and where you’re stuck, and I’ll help.",
+        ]
+        options = vi_options if language == "vi" else en_options
+        return options[_rng.randrange(len(options))]
+
+    if language == "vi":
+        return "Bạn cho mình biết thêm chi tiết (bối cảnh và yêu cầu cụ thể) để mình hỗ trợ chính xác nhé."
+    return "Please share a bit more detail (context and what you need) so I can help accurately."
 
 
 def _flatten_json_value(value, prefix=""):
@@ -293,6 +387,11 @@ def _query_intents(query):
         for phrase in ["du an", "project", "portfolio"]
     ):
         intents.add("projects")
+    if any(
+        phrase in normalized_query
+        for phrase in ["gia", "price", "pricing", "cost", "fee"]
+    ):
+        intents.add("pricing")
     return intents
 
 
@@ -313,18 +412,40 @@ def retrieve_relevant_chunks(user, query, limit=6):
         project_chunks = chunks.filter(content__icontains="projects #")
         if project_chunks.exists():
             chunks = project_chunks
+    elif "pricing" in intents:
+        # Prefer explicit pricing-related knowledge; avoid matching "company"/"type" noise.
+        pricing_chunks = chunks.filter(
+            Q(content__icontains="pricing /")
+            | Q(content__icontains="price:")
+            | Q(content__icontains="gia:")
+            | Q(content__icontains="bang gia")
+            | Q(content__icontains="price list")
+        )
+        if pricing_chunks.exists():
+            chunks = pricing_chunks
+        else:
+            return []
 
     if keywords:
         condition = Q()
         for keyword in keywords:
             condition |= Q(content__icontains=keyword)
+            condition |= Q(document__title__icontains=keyword)
         chunks = chunks.filter(condition)
 
     candidates = list(
         chunks.order_by("-document__updated_at", "chunk_index")[:100]
     )
     if keywords and not candidates:
-        return []
+        # Fall back to the latest ready chunks from active bases if keyword search is too strict.
+        candidates = list(
+            KnowledgeChunk.objects.filter(
+                document__knowledge_base__in=active_bases,
+                document__status="READY",
+            )
+            .select_related("document", "document__knowledge_base")
+            .order_by("-document__updated_at", "chunk_index")[:100]
+        )
     if not keywords:
         candidates = list(
             KnowledgeChunk.objects.filter(
@@ -347,17 +468,18 @@ def retrieve_relevant_chunks(user, query, limit=6):
 
 def build_prompt(visitor_message, chunks, ai_settings):
     context = "\n\n".join(
-        f"[{index + 1}] {chunk.document.title}\n{chunk.content}"
+        f"Knowledge [{index + 1}] - {chunk.document.title}:\n{chunk.content}"
         for index, chunk in enumerate(chunks)
     )
     language = ai_settings.language or "vi"
     return f"""{ai_settings.system_prompt}
 
-Critical rules:
-- Use only the Business knowledge below.
+You are a customer support assistant. Use only the Business knowledge below to answer the visitor's question.
 - Do not invent company names, phone numbers, emails, addresses, technologies, or policies.
-- If the Business knowledge does not contain the answer, say that you do not have enough information and ask the visitor to wait for a human agent.
+- If the Business knowledge does not contain the answer, say you do not have enough information and ask the visitor to wait for a human agent.
 - Prefer exact names and facts from the Business knowledge.
+- Answer in the requested language and keep the tone natural and conversational.
+- Do not repeat raw chunk labels, indexes, or internal metadata in your reply.
 
 Language: {language}
 
@@ -367,7 +489,7 @@ Business knowledge:
 Visitor message:
 {visitor_message}
 
-Answer as the support team. Keep it concise and practical. Use no more than 4 sentences."""
+Answer directly as a support agent. Keep it concise and practical. Use no more than 4 sentences."""
 
 
 def _parse_prefixed_fields(content, prefix):
@@ -399,6 +521,76 @@ def _as_sentence(text):
 
 def build_structured_reply(visitor_message, chunks, ai_settings):
     intents = _query_intents(visitor_message)
+    if "pricing" in intents:
+        products = []
+        for chunk in chunks:
+            text = f" {chunk.content or ''}"
+            for match in re.finditer(
+                r" products #(?P<idx>\d+) / (?P<body>.*?)(?= products #\d+ /|\Z)",
+                text,
+                flags=re.IGNORECASE,
+            ):
+                body = match.group("body")
+                name_match = (
+                    re.search(
+                        r"name / vi: (?P<name>.*?)(?= [a-z0-9_ /#]+: |\Z)",
+                        body,
+                        flags=re.IGNORECASE,
+                    )
+                    or re.search(
+                        r"name / en: (?P<name>.*?)(?= [a-z0-9_ /#]+: |\Z)",
+                        body,
+                        flags=re.IGNORECASE,
+                    )
+                    or re.search(
+                        r"name: (?P<name>.*?)(?= [a-z0-9_ /#]+: |\Z)",
+                        body,
+                        flags=re.IGNORECASE,
+                    )
+                )
+
+                price_match = re.search(
+                    r"price(?: / [a-z]{2})?: (?P<price>.*?)(?= [a-z0-9_ /#]+: |\Z)",
+                    body,
+                    flags=re.IGNORECASE,
+                )
+
+                if not price_match:
+                    continue
+
+                raw_price = (price_match.group("price") or "").strip()
+                digits = re.sub(r"[^\d]", "", raw_price)
+                if not digits:
+                    continue
+
+                try:
+                    price_value = int(digits)
+                except ValueError:
+                    continue
+
+                products.append(
+                    {
+                        "name": (
+                            name_match.group("name").strip()
+                            if name_match
+                            else ""
+                        ),
+                        "price": price_value,
+                        "raw_price": raw_price,
+                    }
+                )
+
+        if not products:
+            return None
+
+        most_expensive = max(products, key=lambda item: item["price"])
+        language = ai_settings.language or "vi"
+        name = most_expensive["name"] or "sản phẩm"
+        raw_price = most_expensive["raw_price"] or str(most_expensive["price"])
+        if language == "vi":
+            return f"Giá cao nhất hiện có là {raw_price} cho {name}."
+        return f"The highest listed price is {raw_price} for {name}."
+
     if "company" not in intents:
         return None
 
@@ -504,11 +696,21 @@ def call_ollama(prompt, ai_settings):
     return (response_payload.get("response") or "").strip()
 
 
+async def call_ollama_async(prompt, ai_settings):
+    return await asyncio.to_thread(call_ollama, prompt, ai_settings)
+
+
 def generate_auto_reply(chat_room_id, visitor_message):
     room = ChatRoom.objects.select_related("user").get(id=chat_room_id)
     ai_settings = get_or_create_ai_settings(room.user)
     if not ai_settings.auto_reply_enabled:
         return None
+
+    language = ai_settings.language or "vi"
+    if _is_meaningless_message(visitor_message) or _is_vague_question(
+        visitor_message
+    ):
+        return build_general_assistant_reply(visitor_message, language=language)
 
     chunks = retrieve_relevant_chunks(
         room.user,
@@ -516,13 +718,19 @@ def generate_auto_reply(chat_room_id, visitor_message):
         limit=ai_settings.max_context_chunks,
     )
     if not chunks:
-        return None
-
-    structured_reply = build_structured_reply(
-        visitor_message, chunks, ai_settings
-    )
-    if structured_reply:
-        return structured_reply[:4000]
+        # No relevant knowledge: respond naturally but do not invent business facts.
+        intents = _query_intents(visitor_message)
+        if "pricing" in intents:
+            if language == "vi":
+                return (
+                    "Mình chưa có đủ dữ liệu bảng giá/sản phẩm để trả lời chính xác. "
+                    "Bạn vui lòng cho biết bạn quan tâm sản phẩm nào hoặc chờ nhân viên hỗ trợ."
+                )
+            return (
+                "I don't have enough pricing/product data to answer accurately. "
+                "Please tell me which product you mean, or wait for a human agent."
+            )
+        return build_general_assistant_reply(visitor_message, language=language)
 
     prompt = build_prompt(visitor_message, chunks, ai_settings)
     try:
@@ -539,7 +747,9 @@ def generate_auto_reply(chat_room_id, visitor_message):
         )
         return None
 
-    return reply[:4000] if reply else None
+    if reply:
+        return reply[:4000]
+    return build_general_assistant_reply(visitor_message, language=language)
 
 
 def save_ai_reply(chat_room_id, reply):

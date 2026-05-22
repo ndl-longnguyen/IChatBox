@@ -1,6 +1,8 @@
 import asyncio
 import json
 import logging
+import socket
+import urllib.error
 from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
@@ -8,7 +10,17 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 
-from ai.services import generate_auto_reply, save_ai_reply
+from ai.services import (
+    _is_meaningless_message,
+    _is_vague_question,
+    _query_intents,
+    build_general_assistant_reply,
+    build_prompt,
+    call_ollama_async,
+    get_or_create_ai_settings,
+    retrieve_relevant_chunks,
+    save_ai_reply,
+)
 from users.models import Participant
 from chat.models import ChatMessage, ChatRoom, CustomerKey
 
@@ -126,6 +138,14 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
             )
 
     async def disconnect(self, close_code):
+        task = getattr(self, "_ai_task", None)
+        if task and not task.done():
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
         # Leave the chat room group if it exists
         if hasattr(self, "chat_room_group_name"):
             await discard_channel_group(
@@ -164,7 +184,10 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
                     "chat_room_id": str(self.chat_room.id),
                 },
             )
-            await self.send_ai_auto_reply(message)
+            # Run AI in the background so we don't block the WS receive loop.
+            self._ai_task = asyncio.create_task(
+                self.send_ai_auto_reply(message)
+            )
 
     async def chat_message(self, event):
         # Send the message to the WebSocket
@@ -240,10 +263,17 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
 
     async def send_ai_auto_reply(self, visitor_message):
         try:
-            reply = await database_sync_to_async(generate_auto_reply)(
-                self.chat_room.id,
-                visitor_message,
+            reply = await asyncio.wait_for(
+                self._generate_ai_reply(visitor_message),
+                timeout=70,
             )
+        except asyncio.CancelledError:
+            return
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Local AI auto-reply timed out for room %s", self.chat_room.id
+            )
+            return
         except Exception:
             logger.exception(
                 "AI auto-reply failed for room %s", self.chat_room.id
@@ -265,6 +295,63 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
             f"admin_{self.customer_user.token}",
             ai_event,
         )
+
+    async def _generate_ai_reply(self, visitor_message):
+        ai_settings = await database_sync_to_async(get_or_create_ai_settings)(
+            self.customer_user
+        )
+        if not ai_settings.auto_reply_enabled:
+            return None
+
+        language = ai_settings.language or "vi"
+        if _is_meaningless_message(visitor_message) or _is_vague_question(
+            visitor_message
+        ):
+            return build_general_assistant_reply(
+                visitor_message, language=language
+            )
+
+        chunks = await database_sync_to_async(retrieve_relevant_chunks)(
+            self.customer_user,
+            visitor_message,
+            ai_settings.max_context_chunks,
+        )
+        if not chunks:
+            intents = _query_intents(visitor_message)
+            if "pricing" in intents:
+                if language == "vi":
+                    return (
+                        "Mình chưa có đủ dữ liệu bảng giá/sản phẩm để trả lời chính xác. "
+                        "Bạn vui lòng cho biết bạn quan tâm sản phẩm nào hoặc chờ nhân viên hỗ trợ."
+                    )
+                return (
+                    "I don't have enough pricing/product data to answer accurately. "
+                    "Please tell me which product you mean, or wait for a human agent."
+                )
+            return build_general_assistant_reply(
+                visitor_message, language=language
+            )
+
+        prompt = build_prompt(visitor_message, chunks, ai_settings)
+        try:
+            reply = await call_ollama_async(prompt, ai_settings)
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            socket.timeout,
+            OSError,
+            json.JSONDecodeError,
+        ) as exc:
+            logger.warning(
+                "Local AI auto-reply failed for room %s: %s",
+                self.chat_room.id,
+                exc,
+            )
+            return None
+
+        if reply:
+            return reply[:4000]
+        return build_general_assistant_reply(visitor_message, language=language)
 
 
 class ChatForAdminConsumer(AsyncWebsocketConsumer):
