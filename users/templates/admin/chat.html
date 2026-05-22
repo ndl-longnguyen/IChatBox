@@ -813,7 +813,9 @@ if (loadMoreButton) {
 }
 
 // Establish WebSocket connection (always connect to receive new room notifications)
-const wsUrl = `ws://127.0.0.1:8002/ws/admin/chat/?token={{ user.token }}&username={{ user.first_name }}{{ user.last_name }}` + (chat_room_id ? `&room=${chat_room_id}` : '');
+const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+const adminName = `{{ user.first_name }}{{ user.last_name }}`.trim();
+const wsUrl = `${wsScheme}://${window.location.host}/ws/admin/chat/?token={{ user.token }}&username=${encodeURIComponent(adminName)}` + (chat_room_id ? `&room=${encodeURIComponent(chat_room_id)}` : '');
 const chatSocket = new WebSocket(wsUrl);
 
 // Mobile off-canvas rooms sidebar

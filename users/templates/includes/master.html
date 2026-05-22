@@ -20,12 +20,16 @@
             min-height: 100vh;
         }
 
-        .navbar {
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #f1f5f9;
-            padding: 14px 24px !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01) !important;
-        }
+	        .navbar {
+	            background-color: #ffffff !important;
+	            border-bottom: 1px solid #f1f5f9;
+	            padding: 14px 24px !important;
+	            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01) !important;
+	            position: sticky;
+	            top: 0;
+	            z-index: 12000;
+	            backdrop-filter: blur(10px);
+	        }
 
         .navbar-brand {
             font-weight: 700 !important;
@@ -95,6 +99,9 @@
                     </li>
                     <li class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                         <a class="nav-link" href="{% url 'profile' %}"><i class="fa fa-cog mr-1"></i>Settings</a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'ai_settings' %}active{% endif %}">
+                        <a class="nav-link" href="{% url 'ai_settings' %}"><i class="fa fa-magic mr-1"></i>AI</a>
                     </li>
                     <li class="nav-item {% if request.resolver_match.url_name == 'integration' %}active{% endif %}">
                         <a class="nav-link" href="{% url 'integration' %}"><i class="fa fa-code mr-1"></i>Integration</a>

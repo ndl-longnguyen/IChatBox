@@ -1,6 +1,8 @@
+import asyncio
+
 from asgiref.sync import async_to_sync
 from channels.testing import WebsocketCommunicator
-from django.test import SimpleTestCase, TransactionTestCase
+from django.test import SimpleTestCase, TransactionTestCase, override_settings
 
 from chat.consumers import ChatForUserConsumer, has_required_visitor_info
 from chat.models import ChatRoom
@@ -47,6 +49,13 @@ class VisitorInfoValidationTests(SimpleTestCase):
         )
 
 
+@override_settings(
+    CHANNEL_LAYERS={
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
+)
 class ChatForUserConsumerTests(TransactionTestCase):
     def setUp(self):
         self.user = User.objects.create(
@@ -65,7 +74,10 @@ class ChatForUserConsumerTests(TransactionTestCase):
         return communicator, connected, close_code
 
     async def disconnect(self, communicator):
-        await communicator.disconnect()
+        try:
+            await communicator.disconnect()
+        except asyncio.CancelledError:
+            pass
 
     async def wait_for_close(self, communicator):
         await communicator.wait()

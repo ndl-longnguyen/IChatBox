@@ -1,13 +1,19 @@
-from channels.generic.websocket import AsyncWebsocketConsumer
+import asyncio
+import json
+import logging
+from urllib.parse import parse_qs
+
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-import json
-from urllib.parse import parse_qs
+
+from ai.services import generate_auto_reply, save_ai_reply
 from users.models import Participant
 from chat.models import ChatMessage, ChatRoom, CustomerKey
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 def normalize_visitor_value(value):
@@ -24,6 +30,24 @@ def has_required_visitor_info(allow_anonymous, username, phone, email):
     normalized_email = normalize_visitor_value(email)
 
     return bool(normalized_username and (normalized_phone or normalized_email))
+
+
+async def discard_channel_group(
+    channel_layer, group_name, channel_name, timeout=2
+):
+    try:
+        await asyncio.wait_for(
+            channel_layer.group_discard(group_name, channel_name),
+            timeout=timeout,
+        )
+    except (asyncio.TimeoutError, asyncio.CancelledError):
+        logger.debug(
+            "Timed out discarding channel %s from %s", channel_name, group_name
+        )
+    except Exception:
+        logger.exception(
+            "Failed to discard channel %s from %s", channel_name, group_name
+        )
 
 
 class ChatForUserConsumer(AsyncWebsocketConsumer):
@@ -104,8 +128,10 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         # Leave the chat room group if it exists
         if hasattr(self, "chat_room_group_name"):
-            await self.channel_layer.group_discard(
-                self.chat_room_group_name, self.channel_name
+            await discard_channel_group(
+                self.channel_layer,
+                self.chat_room_group_name,
+                self.channel_name,
             )
 
     async def receive(self, text_data):
@@ -138,6 +164,7 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
                     "chat_room_id": str(self.chat_room.id),
                 },
             )
+            await self.send_ai_auto_reply(message)
 
     async def chat_message(self, event):
         # Send the message to the WebSocket
@@ -211,6 +238,34 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
             chat_room=self.chat_room, sender_type="PARTICIPANT", content=message
         )
 
+    async def send_ai_auto_reply(self, visitor_message):
+        try:
+            reply = await database_sync_to_async(generate_auto_reply)(
+                self.chat_room.id,
+                visitor_message,
+            )
+        except Exception:
+            logger.exception(
+                "AI auto-reply failed for room %s", self.chat_room.id
+            )
+            return
+
+        if not reply:
+            return
+
+        await database_sync_to_async(save_ai_reply)(self.chat_room.id, reply)
+        ai_event = {
+            "type": "chat_message",
+            "message": reply,
+            "sender_type": "USER",
+            "chat_room_id": str(self.chat_room.id),
+        }
+        await self.channel_layer.group_send(self.chat_room_group_name, ai_event)
+        await self.channel_layer.group_send(
+            f"admin_{self.customer_user.token}",
+            ai_event,
+        )
+
 
 class ChatForAdminConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -235,8 +290,10 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         # Remove admin from their own global group
         if hasattr(self, "room_group_admin_name"):
-            await self.channel_layer.group_discard(
-                self.room_group_admin_name, self.channel_name
+            await discard_channel_group(
+                self.channel_layer,
+                self.room_group_admin_name,
+                self.channel_name,
             )
 
     async def receive(self, text_data):
@@ -285,14 +342,8 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
         )
 
     async def new_room(self, event):
-        # When a new room is created, the admin joins the group dynamically
+        # Admin receives all realtime notifications through its own admin group.
         room_id = event["room_id"]
-        room_group_name = f"chat_room_{room_id}"
-        await self.channel_layer.group_add(room_group_name, self.channel_name)
-
-        # Also add to our tracked chat_rooms list so we clean up on disconnect
-        if hasattr(self, "chat_rooms"):
-            self.chat_rooms.append(room_id)
 
         # Send a notification to the admin UI to append the new chat room to the sidebar
         await self.send(

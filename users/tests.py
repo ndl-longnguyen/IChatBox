@@ -70,7 +70,7 @@ class WidgetHistoryTests(TestCase):
         self.assertEqual(len(payload["messages"]), 1)
         self.assertEqual(payload["messages"][0]["message"], "Hello")
 
-    def test_inactive_key_forbidden(self):
+    def test_inactive_key_returns_generic_not_found(self):
         self.key_a.is_active = False
         self.key_a.save(update_fields=["is_active"])
 
@@ -78,7 +78,7 @@ class WidgetHistoryTests(TestCase):
             reverse("widget_history"),
             {"token": str(self.key_a.key), "device": "device-1"},
         )
-        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.status_code, 404)
 
     def test_history_limit_enforced(self):
         self.key_a.history_limit = 1

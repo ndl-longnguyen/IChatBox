@@ -17,6 +17,16 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    profiles:
+      - ai
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
   web:
     build: .
     ports:
@@ -26,6 +36,11 @@ services:
       DEBUG: ${DEBUG:-True}
       PORT: 8002
       REDIS_URL: redis://redis:6379/0
+      AI_LOCAL_BASE_URL: ${AI_LOCAL_BASE_URL:-http://ollama:11434}
+      AI_LOCAL_MODEL: ${AI_LOCAL_MODEL:-llama3.2:3b}
+      AI_LOCAL_TIMEOUT_SECONDS: ${AI_LOCAL_TIMEOUT_SECONDS:-60}
+      AI_LOCAL_MAX_TOKENS: ${AI_LOCAL_MAX_TOKENS:-220}
+      AI_LOCAL_NUM_CTX: ${AI_LOCAL_NUM_CTX:-4096}
       POSTGRES_DB: ${POSTGRES_DB:-ichatbox}
       POSTGRES_USER: ${POSTGRES_USER:-ichatbox}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ichatbox}
@@ -40,3 +55,4 @@ services:
 
 volumes:
   postgres_data:
+  ollama_data:

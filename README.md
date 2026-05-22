@@ -4,6 +4,7 @@ IChatBox is a multi-website chatbox platform designed to be embedded into extern
 ## Specs
 - `docs/SPECS.md`
 - `docs/PACKAGES.md`
+- `docs/AI_LOCAL.md`
 
 ## Docker Compose (Recommended)
 Run locally with PostgreSQL + Redis:
@@ -15,9 +16,16 @@ URLs:
 - Tenant admin login: `http://127.0.0.1:8002/admin/login/`
 - Tenant live chat: `http://127.0.0.1:8002/admin/chat/`
 - Tenant widget settings: `http://127.0.0.1:8002/admin/profile/`
+- Tenant AI settings: `http://127.0.0.1:8002/admin/ai/`
 - Super admin (Django Admin): `http://127.0.0.1:8002/supper-admin/`
 
 Database in compose uses PostgreSQL (persistent volume `postgres_data`).
+
+To run local AI auto-replies with Ollama:
+```bash
+docker compose --profile ai up -d
+docker compose exec ollama ollama pull llama3.2:3b
+```
 
 ## Run Without Docker (SQLite)
 ### 1. Clone the repository

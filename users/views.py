@@ -5,9 +5,16 @@ from django.contrib.auth import (
     update_session_auth_hash,
 )
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, redirect
+from ai.models import KnowledgeDocument
+from ai.services import (
+    create_file_knowledge_document,
+    create_manual_knowledge_document,
+    delete_knowledge_document,
+    get_or_create_ai_settings,
+)
 from common.messages import MESSAGES
 from users.forms import UserRegistrationForm
 from chat.models import ChatMessage, ChatRoom
@@ -171,6 +178,105 @@ def profile_view(request):
             "user": request.user,
             "success": success,
             "error": error,
+        },
+    )
+
+
+@login_required(login_url=LOGIN_URL)
+def ai_view(request):
+    success = None
+    error = None
+    ai_settings = get_or_create_ai_settings(request.user)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "update_ai_settings":
+            ai_settings.auto_reply_enabled = (
+                request.POST.get("ai_auto_reply_enabled") == "on"
+            )
+            ai_settings.model_name = request.POST.get(
+                "ai_model_name", ""
+            ).strip()
+            ai_settings.language = (
+                request.POST.get("ai_language", "vi").strip() or "vi"
+            )
+            ai_settings.system_prompt = (
+                request.POST.get("ai_system_prompt", "").strip()
+                or ai_settings._meta.get_field("system_prompt").default
+            )
+            try:
+                ai_settings.max_context_chunks = max(
+                    1,
+                    min(
+                        12,
+                        int(request.POST.get("ai_max_context_chunks") or 6),
+                    ),
+                )
+            except ValueError:
+                ai_settings.max_context_chunks = 6
+            ai_settings.save()
+            success = "AI auto-reply settings saved successfully!"
+
+        elif action == "add_ai_text":
+            title = request.POST.get("knowledge_title", "").strip()
+            content = request.POST.get("knowledge_content", "").strip()
+            language = (
+                request.POST.get("knowledge_language", "vi").strip() or "vi"
+            )
+            if not content:
+                error = "Knowledge content is required."
+            else:
+                create_manual_knowledge_document(
+                    request.user,
+                    title or "Manual knowledge",
+                    content,
+                    language,
+                )
+                success = "Knowledge text trained successfully!"
+
+        elif action == "upload_ai_file":
+            uploaded_file = request.FILES.get("knowledge_file")
+            title = request.POST.get("file_title", "").strip()
+            language = request.POST.get("file_language", "vi").strip() or "vi"
+            if not uploaded_file:
+                error = "Please choose a knowledge file to upload."
+            else:
+                try:
+                    create_file_knowledge_document(
+                        request.user,
+                        uploaded_file,
+                        title,
+                        language,
+                    )
+                    success = (
+                        "Knowledge file uploaded and trained successfully!"
+                    )
+                except ValueError as exc:
+                    error = str(exc)
+
+        elif action == "delete_ai_document":
+            document_id = request.POST.get("document_id")
+            if delete_knowledge_document(request.user, document_id):
+                success = "Training data deleted successfully!"
+            else:
+                error = "Training data not found."
+
+    knowledge_documents = (
+        KnowledgeDocument.objects.filter(knowledge_base__user=request.user)
+        .annotate(chunk_count=Count("chunks"))
+        .order_by("-updated_at")[:10]
+    )
+
+    return render(
+        request,
+        "admin/ai.html",
+        {
+            "user": request.user,
+            "success": success,
+            "error": error,
+            "ai_settings": ai_settings,
+            "knowledge_documents": knowledge_documents,
         },
     )
 

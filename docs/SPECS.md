@@ -13,6 +13,8 @@ IChatBox là hệ thống chatbox bán tích hợp cho nhiều website. Mỗi we
 - **Participant**: một visitor trên website của tenant, định danh theo `device` (lưu trong localStorage).
 - **ChatRoom**: phòng chat giữa tenant và một participant.
 - **ChatMessage**: tin nhắn trong phòng chat.
+- **AISettings**: cấu hình AI auto-reply riêng của từng tenant.
+- **KnowledgeDocument / KnowledgeChunk**: dữ liệu training cá nhân và phần chunk tối ưu để truy vấn context.
 
 ## Tenant isolation (multi-website)
 Tất cả dữ liệu chat gắn với `CustomerKey.user` và `Participant.user`. Widget chỉ truy cập qua `token=<CustomerKey.key>`, do đó:
@@ -28,8 +30,7 @@ Trả về cấu hình widget cho key.
 - `plan`: tên gói (string).
 - `history_limit`: số message tối đa widget được load lại khi reload (server-side source of truth).
 
-Nếu key invalid: `404`.
-Nếu key bị khóa `is_active=false`: `403`.
+Nếu key invalid hoặc bị khóa `is_active=false`: generic `404` để không leak trạng thái key.
 
 ### `GET /admin/widget-history/?token=<key>&device=<device>&limit=<n>`
 Trả về lịch sử chat của visitor theo `token + device`.
@@ -37,8 +38,7 @@ Trả về lịch sử chat của visitor theo `token + device`.
 - `limit`: widget có thể gửi nhưng server luôn clamp theo `CustomerKey.history_limit` và giới hạn tối đa 200.
 
 Nếu chưa có chat: trả `messages: []`.
-Nếu key invalid: `404`.
-Nếu key bị khóa: `403`.
+Nếu key invalid hoặc bị khóa: generic `404`.
 
 ## WebSocket realtime
 ### Visitor: `/ws/user/chat/?token=<key>&username=<name>&device=<device>&phone=<p>|&email=<e>`
@@ -49,6 +49,7 @@ Server sẽ:
 4. `Participant` được tạo/lookup theo `(tenant_user, device)`.
 5. `ChatRoom` được tạo/lookup theo `(tenant_user, participant)`.
 6. Tin nhắn visitor lưu với `sender_type=PARTICIPANT`.
+7. Nếu admin bật AI auto-reply và có training data phù hợp, hệ thống tạo tin nhắn phản hồi với `sender_type=USER`.
 
 ### Admin UI: `/ws/admin/chat/`
 Admin đăng nhập `/admin/login/` và xem chat tại `/admin/chat/`.
@@ -65,3 +66,10 @@ Trong `/supper-admin/`:
 - Disable/Enable key: chặn HTTP config/history và WebSocket connect.
 - Rotate key: generate UUID mới (các website nhúng key cũ sẽ bị vô hiệu).
 - Set `plan` và `history_limit`: kiểm soát tính năng theo gói.
+
+## AI local auto-reply
+- AI chạy qua local Ollama-compatible API, cấu hình bằng `AI_LOCAL_BASE_URL` và `AI_LOCAL_MODEL`.
+- Admin bật/tắt auto-reply tại `/admin/ai/`.
+- Admin training dữ liệu bằng nhập form hoặc upload file text/markdown/csv/json.
+- Database lưu bản gốc ở `KnowledgeDocument`, sau đó tách thành `KnowledgeChunk` theo từng tenant để truy vấn context khi visitor gửi tin nhắn.
+- Nếu local AI lỗi, timeout hoặc chưa có dữ liệu phù hợp, hệ thống không tự trả lời và chat realtime vẫn hoạt động bình thường.

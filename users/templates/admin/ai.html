@@ -1,0 +1,170 @@
+{% extends "includes/master.html" %}
+
+{% block title %}IChatBox AI Settings{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    {% if success %}
+        <div class="alert alert-success border-0 py-3 px-4 mb-4 shadow-sm" style="border-radius: 12px; background-color: #ecfdf5; color: #065f46; display: flex; align-items: center; gap: 10px;">
+            <i class="fa fa-check-circle" style="font-size: 18px;"></i>
+            <span class="font-weight-500">{{ success }}</span>
+        </div>
+    {% endif %}
+    {% if error %}
+        <div class="alert alert-danger border-0 py-3 px-4 mb-4 shadow-sm" style="border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa fa-exclamation-circle" style="font-size: 18px;"></i>
+            <span class="font-weight-500">{{ error }}</span>
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-10 offset-md-1 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #0f766e, #14b8a6);">
+                    <h5 class="card-title mb-0"><i class="fa fa-magic mr-2"></i>Local AI Auto Reply</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'ai_settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_ai_settings">
+                        <div class="form-group mb-4">
+                            <div class="custom-control custom-switch mb-3">
+                                <input type="checkbox" class="custom-control-input" id="aiAutoReply" name="ai_auto_reply_enabled" style="cursor: pointer;" {% if ai_settings.auto_reply_enabled %}checked{% endif %}>
+                                <label class="custom-control-label font-weight-bold text-dark" for="aiAutoReply" style="cursor: pointer;">Enable AI auto-reply</label>
+                            </div>
+                            <p class="text-muted small mb-0" style="line-height: 1.5;">
+                                <i class="fa fa-info-circle text-primary mr-1"></i>
+                                AI only replies when this setting is enabled and trained knowledge is available.
+                            </p>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label class="small text-muted font-weight-bold text-uppercase">Local Model</label>
+                                <input type="text" name="ai_model_name" class="form-control" placeholder="llama3.2:3b" value="{{ ai_settings.model_name }}">
+                                <small class="text-muted d-block mt-2">Leave blank to use the server default model.</small>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label class="small text-muted font-weight-bold text-uppercase">Reply Language</label>
+                                <select name="ai_language" class="form-control">
+                                    <option value="vi" {% if ai_settings.language == 'vi' %}selected{% endif %}>Vietnamese</option>
+                                    <option value="en" {% if ai_settings.language == 'en' %}selected{% endif %}>English</option>
+                                    <option value="ja" {% if ai_settings.language == 'ja' %}selected{% endif %}>Japanese</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label class="small text-muted font-weight-bold text-uppercase">Context Chunks</label>
+                                <input type="number" name="ai_max_context_chunks" class="form-control" min="1" max="12" value="{{ ai_settings.max_context_chunks }}">
+                            </div>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="small text-muted font-weight-bold text-uppercase">System Prompt</label>
+                            <textarea name="ai_system_prompt" class="form-control" rows="4">{{ ai_settings.system_prompt }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block py-2" style="border-radius: 10px; font-weight: 600; font-size: 14px;">
+                            Save AI Settings <i class="fa fa-save ml-1"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="card-title mb-0"><i class="fa fa-database mr-2"></i>AI Training Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-4 mb-lg-0">
+                            <form method="POST" action="{% url 'ai_settings' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="add_ai_text">
+                                <div class="form-group">
+                                    <label class="small text-muted font-weight-bold text-uppercase">Title</label>
+                                    <input type="text" name="knowledge_title" class="form-control" placeholder="Pricing, support policy, FAQ...">
+                                </div>
+                                <div class="form-group">
+                                    <label class="small text-muted font-weight-bold text-uppercase">Language</label>
+                                    <select name="knowledge_language" class="form-control">
+                                        <option value="vi">Vietnamese</option>
+                                        <option value="en">English</option>
+                                        <option value="ja">Japanese</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="small text-muted font-weight-bold text-uppercase">Knowledge Content</label>
+                                    <textarea name="knowledge_content" class="form-control" rows="7" placeholder="Enter product info, FAQs, policies, answers, opening hours..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block py-2" style="border-radius: 10px; font-weight: 600; font-size: 14px;">
+                                    Train Text <i class="fa fa-plus ml-1"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-lg-6">
+                            <form method="POST" action="{% url 'ai_settings' %}" enctype="multipart/form-data" class="mb-4">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="upload_ai_file">
+                                <div class="form-group">
+                                    <label class="small text-muted font-weight-bold text-uppercase">File Title</label>
+                                    <input type="text" name="file_title" class="form-control" placeholder="Optional title">
+                                </div>
+                                <div class="form-group">
+                                    <label class="small text-muted font-weight-bold text-uppercase">Language</label>
+                                    <select name="file_language" class="form-control">
+                                        <option value="vi">Vietnamese</option>
+                                        <option value="en">English</option>
+                                        <option value="ja">Japanese</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="small text-muted font-weight-bold text-uppercase">Knowledge File</label>
+                                    <input type="file" name="knowledge_file" class="form-control-file" accept=".txt,.md,.markdown,.csv,.json">
+                                    <small class="text-muted d-block mt-2">Supported: txt, markdown, csv, json. Max size is configured by the server.</small>
+                                </div>
+                                <button type="submit" class="btn btn-outline-dark btn-block py-2" style="border-radius: 10px; font-weight: 600; font-size: 14px;">
+                                    Upload & Train <i class="fa fa-upload ml-1"></i>
+                                </button>
+                            </form>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Status</th>
+                                            <th>Chunks</th>
+                                            <th>Source</th>
+                                            <th class="text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for document in knowledge_documents %}
+                                            <tr>
+                                                <td>{{ document.title }}</td>
+                                                <td>{{ document.status }}</td>
+                                                <td>{{ document.chunk_count }}</td>
+                                                <td>{{ document.source }}</td>
+                                                <td class="text-right">
+                                                    <form method="POST" action="{% url 'ai_settings' %}" onsubmit="return confirm('Delete this training data?');" style="display: inline;">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="delete_ai_document">
+                                                        <input type="hidden" name="document_id" value="{{ document.id }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete training data">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="text-muted text-center py-3">No training data yet.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

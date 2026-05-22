@@ -206,6 +206,18 @@ REST_FRAMEWORK = {
 }
 
 
+AI_LOCAL_BASE_URL = os.getenv("AI_LOCAL_BASE_URL", "http://localhost:11434")
+AI_LOCAL_MODEL = os.getenv("AI_LOCAL_MODEL", "llama3.2:3b")
+AI_LOCAL_TIMEOUT_SECONDS = int(os.getenv("AI_LOCAL_TIMEOUT_SECONDS", "60"))
+AI_LOCAL_MAX_TOKENS = int(os.getenv("AI_LOCAL_MAX_TOKENS", "220"))
+AI_LOCAL_NUM_CTX = int(os.getenv("AI_LOCAL_NUM_CTX", "4096"))
+AI_KNOWLEDGE_CHUNK_SIZE = int(os.getenv("AI_KNOWLEDGE_CHUNK_SIZE", "1200"))
+AI_KNOWLEDGE_CHUNK_OVERLAP = int(os.getenv("AI_KNOWLEDGE_CHUNK_OVERLAP", "160"))
+AI_KNOWLEDGE_UPLOAD_MAX_BYTES = int(
+    os.getenv("AI_KNOWLEDGE_UPLOAD_MAX_BYTES", str(2 * 1024 * 1024))
+)
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
