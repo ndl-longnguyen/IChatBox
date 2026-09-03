@@ -24,7 +24,7 @@ services:
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
     volumes:
-      - ollama_data:/root/.ollama
+      - ./.ollama:/root/.ollama
     restart: unless-stopped
 
   web:
@@ -55,4 +55,3 @@ services:
 
 volumes:
   postgres_data:
-  ollama_data:
