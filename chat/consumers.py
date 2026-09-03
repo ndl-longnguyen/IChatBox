@@ -157,6 +157,22 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         # Parse the incoming message
         text_data_json = json.loads(text_data)
+        event_type = text_data_json.get("type")
+
+        if event_type == "typing":
+            is_typing = bool(text_data_json.get("is_typing", True))
+            admin_group_name = f"admin_{self.customer_user.token}"
+            await self.channel_layer.group_send(
+                admin_group_name,
+                {
+                    "type": "chat_typing",
+                    "sender_type": "PARTICIPANT",
+                    "is_typing": is_typing,
+                    "chat_room_id": str(self.chat_room.id),
+                },
+            )
+            return
+
         message = text_data_json.get("message", "").strip()
 
         if message:
@@ -184,10 +200,34 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
                     "chat_room_id": str(self.chat_room.id),
                 },
             )
-            # Run AI in the background so we don't block the WS receive loop.
-            self._ai_task = asyncio.create_task(
-                self.send_ai_auto_reply(message)
-            )
+
+            # Debounced AI auto-reply: buffer message and wait briefly
+            if not hasattr(self, "_pending_ai_messages"):
+                self._pending_ai_messages = []
+            self._pending_ai_messages.append(message)
+
+            if (
+                hasattr(self, "_ai_task")
+                and self._ai_task
+                and not self._ai_task.done()
+            ):
+                self._ai_task.cancel()
+
+            self._ai_task = asyncio.create_task(self._debounced_ai_auto_reply())
+
+    async def _debounced_ai_auto_reply(self):
+        try:
+            await asyncio.sleep(1.2)
+        except asyncio.CancelledError:
+            return
+
+        messages = list(getattr(self, "_pending_ai_messages", []))
+        self._pending_ai_messages = []
+        if not messages:
+            return
+
+        combined_message = "\n".join(messages)
+        await self.send_ai_auto_reply(combined_message)
 
     async def chat_message(self, event):
         # Send the message to the WebSocket
@@ -198,6 +238,19 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
                     "message": event["message"],
                     "sender_type": event["sender_type"],
                     "chat_room_id": event["chat_room_id"],
+                }
+            )
+        )
+
+    async def chat_typing(self, event):
+        # Forward typing indicator to visitor
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "typing",
+                    "sender_type": event.get("sender_type"),
+                    "is_typing": event.get("is_typing", False),
+                    "chat_room_id": event.get("chat_room_id"),
                 }
             )
         )
@@ -262,6 +315,17 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
         )
 
     async def send_ai_auto_reply(self, visitor_message):
+        # Broadcast typing status: bot is thinking...
+        await self.channel_layer.group_send(
+            self.chat_room_group_name,
+            {
+                "type": "chat_typing",
+                "sender_type": "USER",
+                "is_typing": True,
+                "chat_room_id": str(self.chat_room.id),
+            },
+        )
+        reply = None
         try:
             reply = await asyncio.wait_for(
                 self._generate_ai_reply(visitor_message),
@@ -279,6 +343,17 @@ class ChatForUserConsumer(AsyncWebsocketConsumer):
                 "AI auto-reply failed for room %s", self.chat_room.id
             )
             return
+        finally:
+            # Stop typing status
+            await self.channel_layer.group_send(
+                self.chat_room_group_name,
+                {
+                    "type": "chat_typing",
+                    "sender_type": "USER",
+                    "is_typing": False,
+                    "chat_room_id": str(self.chat_room.id),
+                },
+            )
 
         if not reply:
             return
@@ -386,8 +461,23 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         # Parse the received message
         text_data_json = json.loads(text_data)
-        message = text_data_json.get("message", "").strip()
+        event_type = text_data_json.get("type")
         chat_room_id = text_data_json.get("chat_room_id")
+
+        if event_type == "typing" and chat_room_id:
+            is_typing = bool(text_data_json.get("is_typing", True))
+            await self.channel_layer.group_send(
+                f"chat_room_{chat_room_id}",
+                {
+                    "type": "chat_typing",
+                    "sender_type": "USER",
+                    "is_typing": is_typing,
+                    "chat_room_id": chat_room_id,
+                },
+            )
+            return
+
+        message = text_data_json.get("message", "").strip()
 
         if message and chat_room_id:
             # Save the message
@@ -424,6 +514,19 @@ class ChatForAdminConsumer(AsyncWebsocketConsumer):
                     "message": event["message"],
                     "sender_type": event["sender_type"],
                     "chat_room_id": event["chat_room_id"],
+                }
+            )
+        )
+
+    async def chat_typing(self, event):
+        # Forward typing indicator to admin UI
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "typing",
+                    "sender_type": event.get("sender_type"),
+                    "is_typing": event.get("is_typing", False),
+                    "chat_room_id": event.get("chat_room_id"),
                 }
             )
         )

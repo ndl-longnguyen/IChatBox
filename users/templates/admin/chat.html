@@ -532,6 +532,201 @@
     }
 </style>
 
+    }
+
+    .chat-header .btn-outline-secondary,
+    .chat-header .btn-outline-primary,
+    .chat-header .btn-outline-info,
+    .chat-header .btn-outline-warning {
+        border-color: #e2e8f0 !important;
+        color: #64748b !important;
+        width: 38px;
+        height: 38px;
+        padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50% !important;
+        margin-left: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .chat-header .btn-outline-secondary:hover,
+    .chat-header .btn-outline-primary:hover,
+    .chat-header .btn-outline-info:hover,
+    .chat-header .btn-outline-warning:hover {
+        background-color: #f1f5f9 !important;
+        color: #1e293b !important;
+        transform: translateY(-1px);
+    }
+
+    /* Chat History & Bubbles */
+    .chat-history {
+        flex: 1;
+        overflow-y: auto;
+        background-color: #f8fafc;
+        padding: 24px !important;
+    }
+
+    .chat-history ul {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .chat-history .clearfix {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-history .message-data {
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .chat-history .message-data.text-right {
+        justify-content: flex-end;
+    }
+
+    .chat-history .message-data-time {
+        font-size: 10px;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .chat-history .message-data img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    /* Outgoing Bubble (Visitor/Other) */
+    .chat-history .other-message {
+        background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+        color: #ffffff !important;
+        font-size: 14px;
+        line-height: 1.45;
+        padding: 10px 16px !important;
+        border-radius: 18px 18px 2px 18px !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+        max-width: 70%;
+        word-wrap: break-word;
+        align-self: flex-end;
+    }
+
+    .chat-history .other-message:after {
+        display: none !important;
+    }
+
+    /* Incoming Bubble (Admin/Self) */
+    .chat-history .my-message {
+        background: #ffffff !important;
+        color: #1e293b !important;
+        font-size: 14px;
+        line-height: 1.45;
+        padding: 10px 16px !important;
+        border-radius: 18px 18px 18px 2px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
+        max-width: 70%;
+        word-wrap: break-word;
+        align-self: flex-start;
+    }
+
+    .chat-history .my-message:after {
+        display: none !important;
+    }
+
+    /* Input Area Modernization */
+    .chat-message {
+        border-top: 1px solid #f1f5f9 !important;
+        padding: 16px 24px !important;
+        background: #ffffff;
+        flex-shrink: 0;
+    }
+
+    .chat-message .input-group {
+        border: 1px solid #e2e8f0;
+        border-radius: 28px;
+        overflow: hidden;
+        background: #f8fafc;
+        padding: 4px 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .chat-message .input-group:focus-within {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+        background: #ffffff;
+    }
+
+    .chat-message .ichatbox-input {
+        border: none !important;
+        background: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+        padding: 8px 16px !important;
+        font-size: 14px;
+        color: #1e293b;
+        flex: 1;
+    }
+
+    .chat-message .send-message {
+        cursor: pointer;
+        width: 38px;
+        height: 38px;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+        color: white !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex-shrink: 0;
+    }
+
+    .chat-message .send-message:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .chat-message .send-message:active {
+        transform: scale(0.95);
+    }
+
+    .chat-message .input-group-text {
+        background: transparent !important;
+        border: none !important;
+        color: white !important;
+        padding: 0 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .chat-message .input-group-text i {
+        font-size: 14px;
+    }
+
+    /* Empty State */
+    .chat .text-center h5 {
+        font-weight: 500;
+        color: #64748b;
+    }
+</style>
+
 <div class="admin-container">
     <div id="plist-backdrop" class="plist-backdrop"></div>
     <div class="row clearfix">
@@ -540,27 +735,30 @@
                 {% block chat_sidebar %}
                 <!-- Sidebar for user list -->
                 <div id="plist" class="people-list">
-                    <div class="input-group">
+                    <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fa fa-search"></i></span>
                         </div>
-                        <input type="text" class="form-control" placeholder="Search...">
+                        <input type="text" id="chat-search-input" class="form-control" placeholder="Tìm kiếm khách hàng...">
                     </div>
-                    <ul class="list-unstyled chat-list mt-2 mb-0">
-                        {% for room in rooms %}
-                            <li class="clearfix">
-                                <a href="{% url 'chat' %}?room={{ room.id }}" data-room-id="{{ room.id }}">
+                    <ul class="list-unstyled chat-list mt-1 mb-0" id="chat-rooms-list">
+                        {% for r in rooms %}
+                            <li class="clearfix chat-room-item {% if room and r.id|stringformat:'s' == room|stringformat:'s' %}active{% endif %}"
+                                data-room-id="{{ r.id }}"
+                                data-search-text="{{ r.participant.name|default:'Guest'|lower }} {{ r.participant.email|default:''|lower }} {{ r.participant.phone|default:''|lower }}">
+                                <a href="javascript:void(0);" onclick="selectRoom('{{ r.id }}')" data-room-id="{{ r.id }}" class="d-flex align-items-center">
                                     <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
-                                    <div class="about">
-                                        <div class="name">{{ room.participant.name }}</div>
-                                        <div class="status">
-                                            <i class="fa fa-circle offline"></i>
-                                            {{ room.chat_messages.last.created_at|date:"h:i A, d/m/Y" }}
+                                    <div class="about flex-grow-1 overflow-hidden ml-2">
+                                        <div class="name font-weight-bold text-truncate">{{ r.participant.name|default:"Guest" }}</div>
+                                        <div class="status text-muted text-truncate" style="font-size: 11px;">
+                                            <i class="fa fa-circle {% if r.unread_count %}online text-success{% else %}offline text-muted{% endif %}" style="font-size: 8px;"></i>
+                                            <span class="room-last-time">{{ r.last_activity_at|date:"h:i A, d/m/Y"|default:"Just now" }}</span>
+                                        </div>
+                                        <div class="room-preview text-muted text-truncate" style="font-size: 11px; max-width: 140px;">
+                                            {% if r.recent_messages_cache %}{{ r.recent_messages_cache.0.content }}{% endif %}
                                         </div>
                                     </div>
-                                    {% if room.unread_count and room.unread_count > 0 %}
-                                        <span class="badge badge-primary ml-2 unread-badge">{{ room.unread_count }}</span>
-                                    {% endif %}
+                                    <span class="badge badge-primary ml-auto unread-badge" style="{% if not r.unread_count %}display: none;{% endif %}">{{ r.unread_count|default:"0" }}</span>
                                 </a>
                             </li>
                         {% endfor %}
@@ -568,51 +766,48 @@
                 </div>
                 {% endblock %}
 
-                {% if room %}
-                    <div class="chat">
-                        {% block chat_header %}
-                        <!-- Chat header -->
-                        <div class="chat-header clearfix">
-                            <div class="row">
-                                <div class="col-lg-6">
-                                    <button id="plist-toggle" class="plist-toggle" type="button">
-                                        <i class="fa fa-bars"></i> Rooms
-                                    </button>
-                                    <a href="javascript:void(0);" data-toggle="modal" data-target="#view_info">
-                                        <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
-                                    </a>
-                                    <div class="chat-about">
-                                        <h6 class="m-b-0">{{ room.participant.name }}</h6>
-                                        {% if room.participant.email or room.participant.phone %}
-                                            <small class="d-block text-muted" style="font-size: 11px;">
-                                                {% if room.participant.email %}<i class="fa fa-envelope mr-1"></i>{{ room.participant.email }}{% endif %}
-                                                {% if room.participant.phone %}<span class="mx-2">|</span><i class="fa fa-phone mr-1"></i>{{ room.participant.phone }}{% endif %}
-                                            </small>
-                                        {% endif %}
-                                        {% if messages and messages.last %}
-                                            <small class="d-block mt-1">Last seen: {{ messages.last.created_at|date:"h:i A, d/m/Y" }}</small>
-                                        {% else %}
-                                            <small class="d-block mt-1">No activity yet</small>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 text-right">
-                                    <a href="javascript:void(0);" class="btn btn-outline-secondary"><i class="fa fa-camera"></i></a>
-                                    <a href="javascript:void(0);" class="btn btn-outline-primary"><i class="fa fa-image"></i></a>
-                                    <a href="javascript:void(0);" class="btn btn-outline-info"><i class="fa fa-cogs"></i></a>
-                                    <a href="javascript:void(0);" class="btn btn-outline-warning"><i class="fa fa-question"></i></a>
+                <div class="chat" id="chat-main-container">
+                    <!-- Chat header -->
+                    <div class="chat-header clearfix">
+                        <div class="row align-items-center">
+                            <div class="col-8 d-flex align-items-center">
+                                <button id="plist-toggle" class="plist-toggle" type="button">
+                                    <i class="fa fa-bars"></i>
+                                </button>
+                                <img id="header-avatar" src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;">
+                                <div class="chat-about ml-2">
+                                    <h6 class="m-b-0 font-weight-bold" id="header-participant-name">
+                                        {% if room %}{{ messages.0.chat_room.participant.name|default:"Đang tải..." }}{% else %}Chọn cuộc trò chuyện{% endif %}
+                                    </h6>
+                                    <small id="header-participant-info" class="d-block text-muted" style="font-size: 11px;">
+                                        <span id="header-email"></span>
+                                        <span id="header-separator" style="display: none;" class="mx-2">|</span>
+                                        <span id="header-phone"></span>
+                                    </small>
                                 </div>
                             </div>
+                            <div class="col-4 text-right d-flex justify-content-end align-items-center" style="gap: 8px;">
+                                <button id="btn-notification-perm" class="btn btn-outline-info" title="Bật thông báo màn hình">
+                                    <i class="fa fa-bell-o"></i>
+                                </button>
+                                <button id="btn-customer-info" class="btn btn-outline-secondary" title="Thông tin khách hàng">
+                                    <i class="fa fa-id-card-o"></i>
+                                </button>
+                            </div>
                         </div>
-                        {% endblock %}
+                    </div>
 
-                        {% block chat_history %}
-                        <!-- Chat history -->
-                        <div id="load-more-bar" class="text-center py-2" style="display: {% if show_load_more %}block{% else %}none{% endif %};">
-                            <button id="load-older-messages" class="btn btn-sm btn-outline-primary">Load older messages</button>
-                        </div>
-                        <div class="chat-history">
-                            <ul class="m-b-0 chat-content" data-first-message-id="{% if messages %}{{ messages.0.id }}{% endif %}">
+                    <!-- Load older messages bar -->
+                    <div id="load-more-bar" class="text-center py-2 border-bottom" style="display: {% if show_load_more %}block{% else %}none{% endif %}; background: #f8fafc;">
+                        <button id="load-older-messages" class="btn btn-sm btn-outline-primary" style="border-radius: 999px; font-size: 12px; padding: 4px 14px;">
+                            <i class="fa fa-history mr-1"></i> Tải tin nhắn cũ hơn
+                        </button>
+                    </div>
+
+                    <!-- Chat history content -->
+                    <div class="chat-history">
+                        <ul class="m-b-0 chat-content" data-first-message-id="{% if messages %}{{ messages.0.id }}{% endif %}">
+                            {% if messages %}
                                 {% for message in messages %}
                                     {% if message.sender_type != "USER" %}
                                     <li class="clearfix" data-message-id="{{ message.id }}">
@@ -631,55 +826,83 @@
                                     </li>
                                     {% endif %}
                                 {% endfor %}
-                                <!-- Chat messages will be dynamically added here -->
-                            </ul>
-                        </div>
-                        {% endblock %}
+                            {% else %}
+                                <div id="empty-room-prompt" class="text-center p-5 text-muted">
+                                    <i class="fa fa-comments-o" style="font-size: 48px; opacity: 0.3;"></i>
+                                    <h5 class="mt-3 font-weight-500">Vui lòng chọn một cuộc trò chuyện từ danh sách</h5>
+                                    <p class="small">Hoặc chờ khách truy cập gửi tin nhắn từ website của bạn.</p>
+                                </div>
+                            {% endif %}
+                        </ul>
+                    </div>
 
-                        {% block chat_input %}
-                        <!-- Chat input -->
-                        <div class="chat-message clearfix">
-                            <div class="input-group mb-0">
-                                <div class="input-group-prepend send-message">
-                                    <span class="input-group-text"><i class="fa fa-send"></i></span>
-                                </div>
-                                <input type="text" class="form-control ichatbox-input" placeholder="Enter text here...">
-                            </div>
-                        </div>
-                        {% endblock %}
+                    <!-- Typing indicator for admin -->
+                    <div id="admin-typing-indicator" class="px-4 py-1 text-muted small" style="display: none; background: #f8fafc; font-style: italic; font-size: 12px; border-top: 1px solid #f1f5f9;">
+                        <i class="fa fa-pencil text-primary mr-1"></i> <span id="admin-typing-name">Khách hàng</span> đang nhập tin nhắn...
                     </div>
-                {% else %}
-                    <!-- UI when no chat room is selected -->
-                    <div class="chat">
-                        <div class="chat-header clearfix mb-0">
-                            <div class="row w-200">
-                                <div class="col-12 d-flex align-items-center justify-content-between">
-                                    <button id="plist-toggle" class="plist-toggle" type="button">
-                                        <i class="fa fa-bars"></i> Rooms
-                                    </button>
-                                </div>
+
+                    <!-- Canned responses (Quick reply chips) -->
+                    <div id="canned-replies" class="d-flex align-items-center px-3 py-2 bg-light border-top" style="gap: 6px; overflow-x: auto; white-space: nowrap; {% if not room %}display: none !important;{% endif %}">
+                        <span class="text-muted small mr-1 font-weight-bold" style="font-size: 11px;">Mẫu nhanh:</span>
+                        <button type="button" class="btn btn-sm btn-white border py-0 px-2 quick-reply-btn" style="border-radius: 999px; font-size: 11px; background: #ffffff;" data-text="Xin chào! Em có thể hỗ trợ gì cho anh/chị ạ?">👋 Lời chào</button>
+                        <button type="button" class="btn btn-sm btn-white border py-0 px-2 quick-reply-btn" style="border-radius: 999px; font-size: 11px; background: #ffffff;" data-text="Anh/chị vui lòng để lại số điện thoại để bên em gọi lại tư vấn chi tiết nhé!">📞 Xin SĐT</button>
+                        <button type="button" class="btn btn-sm btn-white border py-0 px-2 quick-reply-btn" style="border-radius: 999px; font-size: 11px; background: #ffffff;" data-text="Dạ, em gửi thông tin chi tiết bảng giá bên em ạ.">💰 Báo giá</button>
+                        <button type="button" class="btn btn-sm btn-white border py-0 px-2 quick-reply-btn" style="border-radius: 999px; font-size: 11px; background: #ffffff;" data-text="Cảm ơn anh/chị đã quan tâm đến dịch vụ!">🙏 Cảm ơn</button>
+                    </div>
+
+                    <!-- Chat input area -->
+                    <div class="chat-message clearfix" id="chat-input-area" style="{% if not room %}display: none;{% endif %}">
+                        <div class="input-group mb-0">
+                            <div class="input-group-prepend send-message" title="Gửi tin nhắn">
+                                <span class="input-group-text"><i class="fa fa-send"></i></span>
                             </div>
-                        </div>
-                        <div class="text-center p-5">
-                            <h5>Please select a chat room to start messaging.</h5>
+                            <input type="text" class="form-control ichatbox-input" placeholder="Nhập tin nhắn phản hồi cho khách..." autocomplete="off">
                         </div>
                     </div>
-                {% endif %}
+                </div>
+
+                <!-- Customer Details Off-Canvas Drawer -->
+                <div id="customer-drawer" class="customer-drawer border-left p-3 bg-white" style="display: none; width: 260px; flex-shrink: 0; overflow-y: auto;">
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                        <h6 class="font-weight-bold mb-0 text-dark" style="font-size: 13px;">Thông tin khách hàng</h6>
+                        <button id="customer-drawer-close" type="button" class="close text-muted" style="outline: none;">&times;</button>
+                    </div>
+                    <div class="text-center mb-3">
+                        <img id="drawer-avatar" src="https://bootdey.com/img/Content/avatar/avatar1.png" style="width: 54px; height: 54px; border-radius: 50%; border: 2px solid #e2e8f0;" alt="avatar">
+                        <h6 id="drawer-name" class="font-weight-bold mt-2 mb-0" style="font-size: 14px;">Khách hàng</h6>
+                    </div>
+                    <div class="small">
+                        <div class="mb-2 pb-1 border-bottom">
+                            <span class="text-muted d-block font-weight-bold" style="font-size: 10px; letter-spacing: 0.5px;">EMAIL</span>
+                            <span id="drawer-email" class="text-dark font-weight-500">Chưa có</span>
+                        </div>
+                        <div class="mb-2 pb-1 border-bottom">
+                            <span class="text-muted d-block font-weight-bold" style="font-size: 10px; letter-spacing: 0.5px;">SỐ ĐIỆN THOẠI</span>
+                            <span id="drawer-phone" class="text-dark font-weight-500">Chưa có</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted d-block font-weight-bold" style="font-size: 10px; letter-spacing: 0.5px;">DEVICE ID</span>
+                            <span id="drawer-device" class="text-muted font-family-monospace" style="font-size: 10px; word-break: break-all;">-</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Function to extract chat_room_id from the URL
-function getChatRoomId() {
+// Quản lý trạng thái phòng chat hiện tại
+function getChatRoomIdFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('room'); // Assumes the room ID is passed as a query parameter
+    return urlParams.get('room') || '';
 }
 
-const chat_room_id = getChatRoomId();
+let chat_room_id = getChatRoomIdFromUrl();
+const originalDocumentTitle = document.title;
+let titleBlinkInterval = null;
 
-// Helper function to format time and date
+// Helper: định dạng ngày giờ
 function formatTime(date) {
     const hours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -688,19 +911,17 @@ function formatTime(date) {
     const formattedTime = `${formattedHours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
 
     const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
 
-    const formattedDate = `${day}/${month}/${year}`;
-    return `${formattedTime}, ${formattedDate}`;
+    return `${formattedTime}, ${day}/${month}/${year}`;
 }
 
-// Function to get the current date and time in the desired format
 function getCurrentDateTime() {
     return formatTime(new Date());
 }
 
-// Function to scroll to the bottom of the chat history
+// Cuộn mượt mà xuống đáy
 function scrollToBottom() {
     const chatHistory = document.querySelector('.chat-history');
     if (chatHistory) {
@@ -715,32 +936,180 @@ function getEarliestRoomMessageId() {
 
 function updateLoadMoreButton(visible) {
     const bar = document.getElementById('load-more-bar');
-    if (!bar) return;
-    bar.style.display = visible ? 'block' : 'none';
+    if (bar) bar.style.display = visible ? 'block' : 'none';
 }
 
-function prependAdminMessageToUI(senderType, message, createdAtIso) {
-    const messages = document.querySelector('.chat-content');
-    if (!messages) return;
-    const isMe = senderType === 'USER';
-    const alignSelf = isMe ? 'flex-start' : 'flex-end';
-    const label = isMe ? 'Hỗ trợ viên' : 'Bạn';
-    const time = createdAtIso ? new Date(createdAtIso) : new Date();
-    const timeString = formatTime(time);
-    const bubbleClass = isMe ? 'my-message' : 'other-message float-right';
-    const avatarHtml = isMe
-        ? ''
-        : '<img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">';
+// Âm thanh chuông báo tin nhắn mới qua Web Audio API (không cần tải file ngoài)
+function playAdminChime() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(659.25, now); // E5
+        osc.frequency.setValueAtTime(880, now + 0.1); // A5
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+    } catch (e) {}
+}
 
-    const itemHtml = `
-        <li class="clearfix" data-message-id="${Math.random().toString(36).slice(2, 10)}">
-            <div class="message-data ${isMe ? '' : 'text-right'}">
-                <span class="message-data-time">${timeString}</span>
-                ${avatarHtml}
-            </div>
-            <div class="message ${bubbleClass}">${message}</div>
-        </li>`;
-    messages.insertAdjacentHTML('afterbegin', itemHtml);
+// Thông báo màn hình (Desktop Notification) & Nhấp nháy Title
+function notifyAdminIncoming(senderName, message) {
+    playAdminChime();
+
+    if (document.hidden) {
+        if (!titleBlinkInterval) {
+            let isBlink = false;
+            titleBlinkInterval = setInterval(() => {
+                document.title = isBlink ? `(1) 💬 Tin nhắn mới!` : originalDocumentTitle;
+                isBlink = !isBlink;
+            }, 1000);
+        }
+
+        if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+                new Notification(`💬 Tin nhắn từ ${senderName || 'Khách hàng'}`, {
+                    body: message.length > 80 ? message.substring(0, 77) + '...' : message,
+                    icon: 'https://bootdey.com/img/Content/avatar/avatar1.png'
+                });
+            } catch (err) {}
+        }
+    }
+}
+
+window.addEventListener('focus', () => {
+    if (titleBlinkInterval) {
+        clearInterval(titleBlinkInterval);
+        titleBlinkInterval = null;
+        document.title = originalDocumentTitle;
+    }
+});
+
+// Chuyển phòng chat tức thì (SPA Mode - Không reload trang)
+function selectRoom(roomId, updateHistory = true) {
+    if (!roomId) return;
+    chat_room_id = roomId;
+
+    if (updateHistory) {
+        history.pushState({ room: roomId }, '', `?room=${roomId}`);
+    }
+
+    // Cập nhật trạng thái active trong sidebar
+    document.querySelectorAll('.chat-room-item').forEach(item => {
+        if (item.dataset.roomId === roomId) {
+            item.classList.add('active');
+            const badge = item.querySelector('.unread-badge');
+            if (badge) badge.style.display = 'none';
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // Hiện thanh nhập liệu và canned responses
+    const canned = document.getElementById('canned-replies');
+    const inputArea = document.getElementById('chat-input-area');
+    const customerBtn = document.getElementById('btn-customer-info');
+    if (canned) canned.style.setProperty('display', 'flex', 'important');
+    if (inputArea) inputArea.style.display = 'block';
+    if (customerBtn) customerBtn.style.display = 'inline-block';
+
+    // Tải tin nhắn từ server
+    fetch(`/admin/room-history/?room=${encodeURIComponent(roomId)}&limit=50`)
+        .then(res => res.json())
+        .then(payload => {
+            if (!payload) return;
+
+            // Cập nhật header
+            const p = payload.participant || {};
+            const pName = p.name || 'Khách hàng';
+            document.getElementById('header-participant-name').textContent = pName;
+
+            const emailElem = document.getElementById('header-email');
+            const phoneElem = document.getElementById('header-phone');
+            const sepElem = document.getElementById('header-separator');
+            emailElem.textContent = p.email ? `✉️ ${p.email}` : '';
+            phoneElem.textContent = p.phone ? `📞 ${p.phone}` : '';
+            sepElem.style.display = (p.email && p.phone) ? 'inline' : 'none';
+
+            // Cập nhật Drawer
+            document.getElementById('drawer-name').textContent = pName;
+            document.getElementById('drawer-email').textContent = p.email || 'Chưa có';
+            document.getElementById('drawer-phone').textContent = p.phone || 'Chưa có';
+            document.getElementById('drawer-device').textContent = p.device || '-';
+
+            // Render danh sách tin nhắn
+            const messagesList = document.querySelector('.chat-content');
+            if (!messagesList) return;
+            messagesList.innerHTML = '';
+
+            const msgs = payload.messages || [];
+            if (msgs.length > 0) {
+                messagesList.dataset.firstMessageId = msgs[0].id;
+                msgs.forEach(msg => {
+                    const isUser = msg.sender_type === 'USER';
+                    const timeStr = formatTime(new Date(msg.created_at));
+                    const bubble = isUser
+                        ? `<li class="clearfix" data-message-id="${msg.id}">
+                            <div class="message-data">
+                                <span class="message-data-time">${timeStr}</span>
+                            </div>
+                            <div class="message my-message">${escapeHtml(msg.message)}</div>
+                        </li>`
+                        : `<li class="clearfix" data-message-id="${msg.id}">
+                            <div class="message-data text-right">
+                                <span class="message-data-time">${timeStr}</span>
+                                <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                            </div>
+                            <div class="message other-message float-right">${escapeHtml(msg.message)}</div>
+                        </li>`;
+                    messagesList.insertAdjacentHTML('beforeend', bubble);
+                });
+            }
+
+            updateLoadMoreButton(Boolean(payload.has_more));
+            scrollToBottom();
+            const input = document.querySelector('.ichatbox-input');
+            if (input) input.focus();
+        })
+        .catch(err => console.error('IChatBox: failed to load room history', err));
+}
+
+window.onpopstate = function () {
+    const currentRoom = getChatRoomIdFromUrl();
+    if (currentRoom) {
+        selectRoom(currentRoom, false);
+    }
+};
+
+// Tìm kiếm khách hàng theo tên, email, phone tức thì
+const searchInput = document.getElementById('chat-search-input');
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        const query = (e.target.value || '').toLowerCase().trim();
+        document.querySelectorAll('.chat-room-item').forEach(item => {
+            const searchText = (item.dataset.searchText || '').toLowerCase();
+            const name = (item.querySelector('.name')?.textContent || '').toLowerCase();
+            if (!query || searchText.includes(query) || name.includes(query)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
 }
 
 function loadRoomHistory(limit, before) {
@@ -748,7 +1117,7 @@ function loadRoomHistory(limit, before) {
     const button = document.getElementById('load-older-messages');
     if (button) {
         button.disabled = true;
-        button.textContent = 'Loading...';
+        button.textContent = 'Đang tải...';
     }
 
     let url = `?room=${encodeURIComponent(chat_room_id)}&limit=${limit}`;
@@ -768,8 +1137,19 @@ function loadRoomHistory(limit, before) {
             orderedMessages.forEach((msg) => {
                 const isUser = msg.sender_type === 'USER';
                 const bubbleHtml = isUser
-                    ? `<li class="clearfix" data-message-id="${msg.id}">\n                        <div class="message-data">\n                            <span class="message-data-time">${formatTime(new Date(msg.created_at))}</span>\n                        </div>\n                        <div class="message my-message">${msg.message}</div>\n                    </li>`
-                    : `<li class="clearfix" data-message-id="${msg.id}">\n                        <div class="message-data text-right">\n                            <span class="message-data-time">${formatTime(new Date(msg.created_at))}</span>\n                            <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">\n                        </div>\n                        <div class="message other-message float-right">${msg.message}</div>\n                    </li>`;
+                    ? `<li class="clearfix" data-message-id="${msg.id}">
+                        <div class="message-data">
+                            <span class="message-data-time">${formatTime(new Date(msg.created_at))}</span>
+                        </div>
+                        <div class="message my-message">${escapeHtml(msg.message)}</div>
+                    </li>`
+                    : `<li class="clearfix" data-message-id="${msg.id}">
+                        <div class="message-data text-right">
+                            <span class="message-data-time">${formatTime(new Date(msg.created_at))}</span>
+                            <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                        </div>
+                        <div class="message other-message float-right">${escapeHtml(msg.message)}</div>
+                    </li>`;
                 messagesList.insertAdjacentHTML('afterbegin', bubbleHtml);
             });
 
@@ -778,44 +1158,78 @@ function loadRoomHistory(limit, before) {
             }
 
             updateLoadMoreButton(Boolean(payload.has_more));
-            if (!payload.has_more) {
-                const bar = document.getElementById('load-more-bar');
-                if (bar) bar.style.display = 'none';
-            }
-
             const newScroll = messagesList.scrollHeight;
             const scrollContainer = messagesList.closest('.chat-history');
             if (scrollContainer) {
                 scrollContainer.scrollTop = newScroll - previousScroll;
             }
         })
-        .catch((error) => {
-            console.error('Failed to load room history', error);
-        })
+        .catch(err => console.error('Failed to load room history', err))
         .finally(() => {
             if (button) {
                 button.disabled = false;
-                button.textContent = 'Load older messages';
+                button.textContent = 'Tải tin nhắn cũ hơn';
             }
         });
 }
-
-scrollToBottom();
 
 const loadMoreButton = document.getElementById('load-older-messages');
 if (loadMoreButton) {
     loadMoreButton.addEventListener('click', () => {
         const beforeId = getEarliestRoomMessageId();
-        if (beforeId) {
-            loadRoomHistory(50, beforeId);
-        }
+        if (beforeId) loadRoomHistory(50, beforeId);
     });
 }
 
-// Establish WebSocket connection (always connect to receive new room notifications)
+// Bật thông báo Desktop Notification
+const btnNotif = document.getElementById('btn-notification-perm');
+if (btnNotif && 'Notification' in window) {
+    if (Notification.permission === 'granted') {
+        btnNotif.classList.remove('btn-outline-info');
+        btnNotif.classList.add('btn-info');
+    }
+    btnNotif.addEventListener('click', () => {
+        Notification.requestPermission().then(perm => {
+            if (perm === 'granted') {
+                btnNotif.classList.remove('btn-outline-info');
+                btnNotif.classList.add('btn-info');
+                new Notification('IChatBox', { body: 'Thông báo tin nhắn mới đã được bật thành công!' });
+            }
+        });
+    });
+}
+
+// Toggle Customer Details Drawer
+const customerDrawer = document.getElementById('customer-drawer');
+const btnCustomerInfo = document.getElementById('btn-customer-info');
+const btnCustomerClose = document.getElementById('customer-drawer-close');
+if (btnCustomerInfo && customerDrawer) {
+    btnCustomerInfo.addEventListener('click', () => {
+        customerDrawer.style.display = (customerDrawer.style.display === 'none') ? 'block' : 'none';
+    });
+}
+if (btnCustomerClose && customerDrawer) {
+    btnCustomerClose.addEventListener('click', () => {
+        customerDrawer.style.display = 'none';
+    });
+}
+
+// Canned Responses click to insert
+document.querySelectorAll('.quick-reply-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const text = btn.dataset.text;
+        const input = document.querySelector('.ichatbox-input');
+        if (input && text) {
+            input.value = text;
+            input.focus();
+        }
+    });
+});
+
+// Khởi tạo kết nối WebSocket Realtime
 const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
 const adminName = `{{ user.first_name }}{{ user.last_name }}`.trim();
-const wsUrl = `${wsScheme}://${window.location.host}/ws/admin/chat/?token={{ user.token }}&username=${encodeURIComponent(adminName)}` + (chat_room_id ? `&room=${encodeURIComponent(chat_room_id)}` : '');
+const wsUrl = `${wsScheme}://${window.location.host}/ws/admin/chat/?token={{ user.token }}&username=${encodeURIComponent(adminName)}`;
 const chatSocket = new WebSocket(wsUrl);
 
 // Mobile off-canvas rooms sidebar
@@ -824,28 +1238,20 @@ const plistBackdrop = document.getElementById('plist-backdrop');
 const plistToggle = document.getElementById('plist-toggle');
 
 function openPlist() {
-    if (!plist) return;
-    plist.classList.add('open');
+    if (plist) plist.classList.add('open');
     if (plistBackdrop) plistBackdrop.classList.add('active');
 }
-
 function closePlist() {
-    if (!plist) return;
-    plist.classList.remove('open');
+    if (plist) plist.classList.remove('open');
     if (plistBackdrop) plistBackdrop.classList.remove('active');
 }
-
 if (plistToggle) {
     plistToggle.addEventListener('click', () => {
         if (plist && plist.classList.contains('open')) closePlist();
         else openPlist();
     });
 }
-
-if (plistBackdrop) {
-    plistBackdrop.addEventListener('click', closePlist);
-}
-
+if (plistBackdrop) plistBackdrop.addEventListener('click', closePlist);
 if (plist) {
     plist.addEventListener('click', (e) => {
         const link = e.target && e.target.closest ? e.target.closest('a') : null;
@@ -853,127 +1259,158 @@ if (plist) {
     });
 }
 
-// Handle incoming messages
+// Nhận tin nhắn WebSocket
 chatSocket.onmessage = function (e) {
     const data = JSON.parse(e.data);
     const currentTime = getCurrentDateTime();
 
-    // 1. Xử lý khi có khách hàng mới bắt đầu chat (tạo phòng mới)
-    if (data.type === 'new_room') {
-        const chatList = document.querySelector('.chat-list');
-        // Kiểm tra xem phòng này đã có trong sidebar chưa
-        const existingRoom = document.querySelector(`a[href*="room=${data.room_id}"]`);
-        if (!existingRoom && chatList) {
-            const li = document.createElement('li');
-            li.className = 'clearfix';
-            li.innerHTML = `
-                <a href="{% url 'chat' %}?room=${data.room_id}">
-                    <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
-                    <div class="about">
-                        <div class="name">${data.participant_name}</div>
-                        <div class="status">
-                            <i class="fa fa-circle online"></i>
-                            Just now
-                        </div>
-                    </div>
-                </a>
-            `;
-            chatList.prepend(li);
-            // mark as unread for admin
-            const anchor = li.querySelector('a');
-            if (anchor) {
-                const badge = document.createElement('span');
-                badge.className = 'badge badge-primary ml-2 unread-badge';
-                badge.textContent = '1';
-                anchor.appendChild(badge);
-            }
+    // Typing indicator
+    if (data.type === 'typing') {
+        const typingBar = document.getElementById('admin-typing-indicator');
+        if (typingBar && data.chat_room_id === chat_room_id) {
+            typingBar.style.display = data.is_typing ? 'block' : 'none';
         }
         return;
     }
 
-    // 2. Xử lý khi có tin nhắn chat mới
+    // Tạo phòng mới
+    if (data.type === 'new_room') {
+        const chatList = document.querySelector('.chat-list');
+        const existingRoom = document.querySelector(`li[data-room-id="${data.room_id}"]`);
+        if (!existingRoom && chatList) {
+            const li = document.createElement('li');
+            li.className = 'clearfix chat-room-item';
+            li.dataset.roomId = data.room_id;
+            li.dataset.searchText = (data.participant_name || '').toLowerCase();
+            li.innerHTML = `
+                <a href="javascript:void(0);" onclick="selectRoom('${data.room_id}')" data-room-id="${data.room_id}" class="d-flex align-items-center">
+                    <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+                    <div class="about flex-grow-1 overflow-hidden ml-2">
+                        <div class="name font-weight-bold text-truncate">${data.participant_name || 'Khách mới'}</div>
+                        <div class="status text-muted text-truncate" style="font-size: 11px;">
+                            <i class="fa fa-circle online text-success" style="font-size: 8px;"></i>
+                            <span class="room-last-time">Vừa xong</span>
+                        </div>
+                        <div class="room-preview text-muted text-truncate" style="font-size: 11px; max-width: 140px;">Bắt đầu chat</div>
+                    </div>
+                    <span class="badge badge-primary ml-auto unread-badge">1</span>
+                </a>
+            `;
+            chatList.prepend(li);
+            notifyAdminIncoming(data.participant_name, 'Khách hàng mới bắt đầu chat');
+        }
+        return;
+    }
+
+    // Tin nhắn chat mới
     if (data.type === 'chat_message' || data.sender_type) {
-        // Chỉ append tin nhắn vào box nếu đang mở đúng phòng chat đó
+        const typingBar = document.getElementById('admin-typing-indicator');
+        if (typingBar) typingBar.style.display = 'none';
+
+        // 1. Nếu đang mở đúng phòng này: hiển thị tin nhắn
         if (data.chat_room_id === chat_room_id) {
             const messages = document.querySelector('.chat-content');
-            if (!messages) return;
+            if (messages) {
+                const emptyPrompt = document.getElementById('empty-room-prompt');
+                if (emptyPrompt) emptyPrompt.remove();
 
-            if (data.sender_type === 'USER') {
-                // Tin nhắn từ Admin (chính mình)
-                messages.innerHTML += `
-                    <li class="clearfix">
+                const isMe = data.sender_type === 'USER';
+                const itemHtml = isMe
+                    ? `<li class="clearfix">
                         <div class="message-data">
                             <span class="message-data-time">${currentTime}</span>
                         </div>
-                        <div class="message my-message">${data.message}</div>
-                    </li>`;
-            } else {
-                // Tin nhắn từ Khách hàng
-                messages.innerHTML += `
-                    <li class="clearfix">
+                        <div class="message my-message">${escapeHtml(data.message)}</div>
+                    </li>`
+                    : `<li class="clearfix">
                         <div class="message-data text-right">
                             <span class="message-data-time">${currentTime}</span>
                             <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
                         </div>
-                        <div class="message other-message float-right">${data.message}</div>
+                        <div class="message other-message float-right">${escapeHtml(data.message)}</div>
                     </li>`;
+                messages.insertAdjacentHTML('beforeend', itemHtml);
+                scrollToBottom();
             }
+        }
 
-            // Cuộn xuống cuối
-            scrollToBottom();
-        } else {
-            // Update unread badge for the room that received the message
-            try {
-                const roomLink = document.querySelector(`a[data-room-id="${data.chat_room_id}"]`);
-                if (roomLink) {
-                    let badge = roomLink.querySelector('.unread-badge');
-                    if (!badge) {
-                        badge = document.createElement('span');
-                        badge.className = 'badge badge-primary ml-2 unread-badge';
-                        badge.textContent = '1';
-                        roomLink.appendChild(badge);
-                    } else {
-                        const n = parseInt(badge.textContent || '0', 10) + 1;
-                        badge.textContent = String(n);
-                    }
+        // 2. Di chuyển cuộc hội thoại lên đầu danh sách & cập nhật xem trước tin nhắn
+        const roomItem = document.querySelector(`li[data-room-id="${data.chat_room_id}"]`);
+        const chatList = document.querySelector('.chat-list');
+        if (roomItem && chatList) {
+            chatList.prepend(roomItem);
+            const preview = roomItem.querySelector('.room-preview');
+            if (preview) preview.textContent = data.message;
+            const timeSpan = roomItem.querySelector('.room-last-time');
+            if (timeSpan) timeSpan.textContent = 'Vừa xong';
+        }
+
+        // 3. Nếu tin từ khách hàng
+        if (data.sender_type !== 'USER') {
+            const senderName = roomItem?.querySelector('.name')?.textContent || 'Khách hàng';
+            notifyAdminIncoming(senderName, data.message);
+
+            if (data.chat_room_id !== chat_room_id && roomItem) {
+                let badge = roomItem.querySelector('.unread-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'badge badge-primary ml-auto unread-badge';
+                    badge.textContent = '1';
+                    roomItem.querySelector('a')?.appendChild(badge);
+                } else {
+                    const n = parseInt(badge.textContent || '0', 10) + 1;
+                    badge.textContent = String(n);
+                    badge.style.display = 'inline-block';
                 }
-            } catch (err) {
-                // ignore UI update errors
             }
         }
     }
 };
 
-// Handle sending messages
+// Gửi tin nhắn
 const sendMessage = () => {
     const input = document.querySelector('.ichatbox-input');
     if (!input) return;
-    const message = input.value.trim();
+    const message = (input.value || '').trim();
     if (!message || !chat_room_id) return;
 
-    // Gửi tin nhắn qua WebSocket (không tự append local nữa để tránh duplicate)
     chatSocket.send(JSON.stringify({
         'message': message,
         'chat_room_id': chat_room_id
     }));
 
-    // Xóa ô input
     input.value = '';
 };
 
 const sendButton = document.querySelector('.send-message');
-if (sendButton) {
-    sendButton.onclick = sendMessage;
-}
+if (sendButton) sendButton.onclick = sendMessage;
 
 const textInput = document.querySelector('.ichatbox-input');
 if (textInput) {
+    let adminTypingTimer = null;
     textInput.onkeypress = function (e) {
         if (e.key === 'Enter') {
             sendMessage();
         }
     };
+    textInput.addEventListener('input', () => {
+        if (!chat_room_id) return;
+        chatSocket.send(JSON.stringify({
+            'type': 'typing',
+            'chat_room_id': chat_room_id,
+            'is_typing': true
+        }));
+        clearTimeout(adminTypingTimer);
+        adminTypingTimer = setTimeout(() => {
+            chatSocket.send(JSON.stringify({
+                'type': 'typing',
+                'chat_room_id': chat_room_id,
+                'is_typing': false
+            }));
+        }, 2000);
+    });
 }
-</script>
 
+scrollToBottom();
+</script>
 {% endblock content %}

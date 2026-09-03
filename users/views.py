@@ -62,20 +62,34 @@ def register_view(request):
     return render(request, "admin/signup.html", {"form": form})
 
 
+from django.db.models import Prefetch
+
+
 @login_required(login_url=LOGIN_URL)
 def chat_view(request):
     """
     Handle chat page
     """
     room = request.GET.get("room")
-    rooms = ChatRoom.objects.filter(user=request.user).order_by(
-        "-last_activity_at", "-id"
+    rooms = (
+        ChatRoom.objects.filter(user=request.user)
+        .select_related("participant", "customer_key")
+        .prefetch_related(
+            Prefetch(
+                "chat_messages",
+                queryset=ChatMessage.objects.order_by("-created_at"),
+                to_attr="recent_messages_cache",
+            )
+        )
+        .order_by("-last_activity_at", "-id")
     )
     messages = None
     show_load_more = False
     if room:
         try:
-            active_room = ChatRoom.objects.get(id=room, user=request.user)
+            active_room = ChatRoom.objects.select_related("participant").get(
+                id=room, user=request.user
+            )
             # Reset unread counter when admin opens the room
             if getattr(active_room, "unread_count", 0):
                 active_room.unread_count = 0
@@ -354,9 +368,16 @@ def room_history(request):
         return JsonResponse({"error": "room is required"}, status=400)
 
     try:
-        room = ChatRoom.objects.get(id=room_id, user=request.user)
+        room = ChatRoom.objects.select_related("participant").get(
+            id=room_id, user=request.user
+        )
     except (ChatRoom.DoesNotExist, ValueError):
         return JsonResponse({"error": "Room not found"}, status=404)
+
+    # Reset unread counter when room is opened/fetched by admin
+    if getattr(room, "unread_count", 0):
+        room.unread_count = 0
+        room.save(update_fields=["unread_count"])
 
     messages_qs = ChatMessage.objects.filter(chat_room=room)
     if before_message_id:
@@ -389,8 +410,19 @@ def room_history(request):
         for msg in reversed(messages)
     ]
 
+    participant_data = {}
+    if room.participant:
+        participant_data = {
+            "name": room.participant.name or "Guest",
+            "email": room.participant.email or "",
+            "phone": room.participant.phone or "",
+            "device": room.participant.device or "",
+        }
+
     return JsonResponse(
         {
+            "room_id": str(room.id),
+            "participant": participant_data,
             "messages": serialized,
             "has_more": has_more,
             "next_cursor": serialized[0]["id"] if serialized else None,
