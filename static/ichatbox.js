@@ -38,7 +38,20 @@ function IChatBox(options) {
                         <span id="ichatbox-substatus" style="font-size: 11px; opacity: 0.85; font-weight: 400;">Đang hoạt động</span>
                     </div>
                 </div>
-                <button id="ichatbox-close" title="Thu nhỏ">&times;</button>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <button id="ichatbox-menu-btn" type="button" title="Tùy chọn">⋮</button>
+                    <button id="ichatbox-close" type="button" title="Thu nhỏ (ESC)">&times;</button>
+                </div>
+                <div id="ichatbox-menu-dropdown">
+                    <div class="ichatbox-menu-item" id="ichatbox-mute-toggle">
+                        <span id="ichatbox-mute-icon">🔔</span>
+                        <span id="ichatbox-mute-text">Tắt âm thanh</span>
+                    </div>
+                    <div class="ichatbox-menu-item" id="ichatbox-reset-btn" style="color: #dc2626;">
+                        <span>🔄</span>
+                        <span>Phiên trò chuyện mới</span>
+                    </div>
+                </div>
             </div>
             <div id="ichatbox-conn-status" style="display: none; background: #fef3c7; color: #92400e; font-size: 11px; padding: 5px 12px; text-align: center; font-weight: 500; border-bottom: 1px solid #fde68a;">
                 ⚠️ Mất kết nối. Đang tự động kết nối lại...
@@ -57,8 +70,23 @@ function IChatBox(options) {
                 Powered by <span style="font-weight: 700; color: #6366f1;">IChatBox</span>
             </div>
             <div id="ichatbox-footer">
-                <input id="ichatbox-input" type="text" placeholder="Nhập tin nhắn của bạn..." autocomplete="off">
-                <button id="ichatbox-send" title="Gửi">
+                <div id="ichatbox-emoji-popover">
+                    <span class="ichatbox-emoji-item">😊</span>
+                    <span class="ichatbox-emoji-item">👍</span>
+                    <span class="ichatbox-emoji-item">🙏</span>
+                    <span class="ichatbox-emoji-item">❤️</span>
+                    <span class="ichatbox-emoji-item">🔥</span>
+                    <span class="ichatbox-emoji-item">💯</span>
+                    <span class="ichatbox-emoji-item">👋</span>
+                    <span class="ichatbox-emoji-item">😂</span>
+                    <span class="ichatbox-emoji-item">😍</span>
+                    <span class="ichatbox-emoji-item">😎</span>
+                    <span class="ichatbox-emoji-item">📞</span>
+                    <span class="ichatbox-emoji-item">✨</span>
+                </div>
+                <button id="ichatbox-emoji-btn" type="button" title="Chèn biểu cảm">😊</button>
+                <textarea id="ichatbox-input" rows="1" placeholder="Nhập tin nhắn... (Enter gửi, Shift+Enter xuống dòng)"></textarea>
+                <button id="ichatbox-send" type="button" title="Gửi">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(45deg);"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
@@ -228,31 +256,140 @@ function IChatBox(options) {
                 background: #64748b;
             }
             #ichatbox-footer {
-                padding: 12px 16px;
+                padding: 10px 14px;
                 background: #ffffff;
                 border-top: 1px solid #f1f5f9;
                 display: flex;
-                align-items: center;
+                align-items: flex-end;
                 gap: 8px;
+                position: relative;
             }
             #ichatbox-input {
                 flex: 1;
                 border: 1px solid #e2e8f0;
-                border-radius: 24px;
-                padding: 10px 16px;
+                border-radius: 18px;
+                padding: 9px 14px;
                 font-size: 14px;
+                line-height: 1.4;
                 outline: none;
                 font-family: inherit;
-                transition: all 0.2s ease;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
                 color: #1e293b;
+                resize: none;
+                max-height: 100px;
+                min-height: 38px;
+                box-sizing: border-box;
             }
             #ichatbox-input:focus {
                 border-color: #6366f1;
                 box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
             }
+            #ichatbox-emoji-btn {
+                background: none;
+                border: none;
+                font-size: 20px;
+                cursor: pointer;
+                padding: 6px 4px;
+                line-height: 1;
+                opacity: 0.75;
+                transition: opacity 0.2s, transform 0.2s;
+                outline: none;
+                flex-shrink: 0;
+            }
+            #ichatbox-emoji-btn:hover {
+                opacity: 1;
+                transform: scale(1.15);
+            }
+            #ichatbox-emoji-popover {
+                position: absolute;
+                bottom: 58px;
+                left: 14px;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                padding: 10px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+                display: none;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 6px;
+                z-index: 10005;
+                animation: ichatbox-fade-in 0.2s ease;
+            }
+            .ichatbox-emoji-item {
+                font-size: 20px;
+                cursor: pointer;
+                text-align: center;
+                padding: 4px;
+                border-radius: 8px;
+                transition: background 0.15s, transform 0.15s;
+                user-select: none;
+            }
+            .ichatbox-emoji-item:hover {
+                background: #f1f5f9;
+                transform: scale(1.2);
+            }
+
+            /* Header Menu & Dropdown */
+            #ichatbox-menu-btn {
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.85);
+                font-size: 19px;
+                cursor: pointer;
+                padding: 0 6px;
+                line-height: 1;
+                outline: none;
+                transition: color 0.2s, transform 0.2s;
+            }
+            #ichatbox-menu-btn:hover {
+                color: white;
+                transform: scale(1.1);
+            }
+            #ichatbox-menu-dropdown {
+                position: absolute;
+                top: 54px;
+                right: 14px;
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+                padding: 6px 0;
+                display: none;
+                flex-direction: column;
+                z-index: 10003;
+                min-width: 175px;
+                animation: ichatbox-fade-in 0.2s ease;
+            }
+            .ichatbox-menu-item {
+                padding: 9px 14px;
+                font-size: 12px;
+                color: #334155;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 500;
+                transition: background 0.15s, color 0.15s;
+            }
+            .ichatbox-menu-item:hover {
+                background: #f8fafc;
+                color: #4f46e5;
+            }
+
+            /* Welcome Greeting Card */
+            .ichatbox-welcome-card {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 16px;
+                margin-bottom: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+                animation: ichatbox-fade-in 0.3s ease;
+            }
+
             #ichatbox-send {
-                width: 40px;
-                height: 40px;
+                width: 38px;
+                height: 38px;
                 border-radius: 50%;
                 background: linear-gradient(135deg, #4f46e5, #6366f1);
                 color: white;
@@ -264,6 +401,7 @@ function IChatBox(options) {
                 transition: transform 0.2s ease, box-shadow 0.2s ease;
                 flex-shrink: 0;
                 padding: 0;
+                margin-bottom: 1px;
             }
             #ichatbox-send:hover {
                 transform: scale(1.05);
@@ -578,7 +716,25 @@ function IChatBox(options) {
             clearTimeout(teaserTimer);
         };
 
+        let isSoundMuted = localStorage.getItem('ichatbox_sound_muted') === '1';
+        const eventListeners = {};
+        const emitEvent = (event, data) => {
+            if (eventListeners[event]) {
+                eventListeners[event].forEach(cb => {
+                    try { cb(data); } catch (err) { console.error('IChatBox event error:', err); }
+                });
+            }
+        };
+
+        const updateMuteUi = () => {
+            const muteIcon = document.getElementById('ichatbox-mute-icon');
+            const muteText = document.getElementById('ichatbox-mute-text');
+            if (muteIcon) muteIcon.textContent = isSoundMuted ? '🔕' : '🔔';
+            if (muteText) muteText.textContent = isSoundMuted ? 'Bật âm thanh' : 'Tắt âm thanh';
+        };
+
         const playChime = () => {
+            if (isSoundMuted) return;
             try {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 if (!AudioCtx) return;
@@ -636,6 +792,7 @@ function IChatBox(options) {
             chatContainer.classList.add('active');
             updateUnreadBadge(0);
             hideTeaser();
+            emitEvent('open');
             if (toggleIconElem) {
                 toggleIconElem.style.transform = 'scale(0) rotate(90deg)';
                 setTimeout(() => {
@@ -652,6 +809,12 @@ function IChatBox(options) {
 
         const closeChatbox = () => {
             chatContainer.classList.remove('active');
+            emitEvent('close');
+            const menuDropdown = document.getElementById('ichatbox-menu-dropdown');
+            if (menuDropdown) menuDropdown.style.display = 'none';
+            const emojiPopover = document.getElementById('ichatbox-emoji-popover');
+            if (emojiPopover) emojiPopover.style.display = 'none';
+
             if (toggleIconElem) {
                 toggleIconElem.style.transform = 'scale(0) rotate(-90deg)';
                 setTimeout(() => {
@@ -686,6 +849,91 @@ function IChatBox(options) {
                     });
                 }
             }
+
+            // Menu tùy chọn (Tắt âm thanh, Bắt đầu phiên mới)
+            const menuBtn = document.getElementById('ichatbox-menu-btn');
+            const menuDropdown = document.getElementById('ichatbox-menu-dropdown');
+            if (menuBtn && menuDropdown) {
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    menuDropdown.style.display = (menuDropdown.style.display === 'flex') ? 'none' : 'flex';
+                });
+            }
+
+            const muteBtn = document.getElementById('ichatbox-mute-toggle');
+            if (muteBtn) {
+                muteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    isSoundMuted = !isSoundMuted;
+                    localStorage.setItem('ichatbox_sound_muted', isSoundMuted ? '1' : '0');
+                    updateMuteUi();
+                    if (menuDropdown) menuDropdown.style.display = 'none';
+                });
+                updateMuteUi();
+            }
+
+            const resetBtn = document.getElementById('ichatbox-reset-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('Bắt đầu phiên trò chuyện mới và xóa lịch sử trên trình duyệt này?')) {
+                        localStorage.removeItem('ichatbox_visitor_id');
+                        localStorage.removeItem(visitorInfoStorageKey);
+                        localStorage.removeItem(legacyVisitorInfoStorageKey);
+                        location.reload();
+                    }
+                });
+            }
+
+            // Emoji Popover
+            const emojiBtn = document.getElementById('ichatbox-emoji-btn');
+            const emojiPopover = document.getElementById('ichatbox-emoji-popover');
+            const inputElem = document.getElementById('ichatbox-input');
+
+            if (emojiBtn && emojiPopover) {
+                emojiBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    emojiPopover.style.display = (emojiPopover.style.display === 'grid') ? 'none' : 'grid';
+                });
+
+                emojiPopover.querySelectorAll('.ichatbox-emoji-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const emoji = item.textContent;
+                        if (inputElem) {
+                            const start = inputElem.selectionStart || inputElem.value.length;
+                            const end = inputElem.selectionEnd || inputElem.value.length;
+                            inputElem.value = inputElem.value.substring(0, start) + emoji + inputElem.value.substring(end);
+                            inputElem.selectionStart = inputElem.selectionEnd = start + emoji.length;
+                            inputElem.focus();
+                            inputElem.style.height = 'auto';
+                            inputElem.style.height = Math.min(inputElem.scrollHeight, 100) + 'px';
+                        }
+                        emojiPopover.style.display = 'none';
+                    });
+                });
+            }
+
+            // Đóng popover khi click ra ngoài
+            document.addEventListener('click', () => {
+                if (menuDropdown) menuDropdown.style.display = 'none';
+                if (emojiPopover) emojiPopover.style.display = 'none';
+            });
+
+            // Phím tắt ESC đóng chatbox
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && chatContainer.classList.contains('active')) {
+                    closeChatbox();
+                }
+            });
+
+            // Proactive Teaser: Tự động mời chat sau 8 giây nếu khách chưa mở widget
+            setTimeout(() => {
+                if (!chatContainer.classList.contains('active') && !sessionStorage.getItem('ichatbox_proactive_shown')) {
+                    sessionStorage.setItem('ichatbox_proactive_shown', '1');
+                    showTeaser('👋 Bạn cần hỗ trợ tư vấn? Nhắn tin với chúng tôi nhé!');
+                }
+            }, 8000);
         };
 
         // Tạo hoặc lấy ID duy nhất cho visitor từ localStorage
@@ -917,6 +1165,8 @@ function IChatBox(options) {
 
             const safeContent = formatMessageContent(message);
 
+            const tickHtml = isMe ? '<span style="margin-left: 4px; font-size: 10px; color: #a5b4fc; font-weight: 700;">✓✓</span>' : '';
+
             const msgDiv = document.createElement('div');
             msgDiv.className = 'ichatbox-msg-wrapper';
             msgDiv.style.alignSelf = alignSelf;
@@ -925,7 +1175,7 @@ function IChatBox(options) {
                     ${safeContent}
                 </span>
                 <span style="font-size: 9px; color: #94a3b8; margin-top: 4px; padding: 0 4px; ${alignText}">
-                    ${label} • ${timeString}
+                    ${label} • ${timeString}${tickHtml}
                 </span>
             `;
             messages.appendChild(msgDiv);
@@ -967,6 +1217,18 @@ function IChatBox(options) {
                                 });
                             }
                         } else if (!before) {
+                            const welcomeCard = document.createElement('div');
+                            welcomeCard.className = 'ichatbox-welcome-card';
+                            welcomeCard.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                    <span style="font-size: 18px;">👋</span>
+                                    <span style="font-weight: 700; font-size: 14px; color: #1e293b;">Xin chào bạn!</span>
+                                </div>
+                                <div style="font-size: 13px; color: #64748b; line-height: 1.5;">
+                                    Rất vui được hỗ trợ bạn. Hãy gửi tin nhắn hoặc chọn gợi ý bên dưới để bắt đầu nhé!
+                                </div>
+                            `;
+                            messagesDiv.appendChild(welcomeCard);
                             renderFaqChips();
                         }
 
@@ -1198,17 +1460,92 @@ function IChatBox(options) {
                     appendMessageToUI('PARTICIPANT', message);
                 }
                 input.value = '';
+                input.style.height = 'auto';
                 showTyping('Đang phản hồi...');
+                emitEvent('message:sent', message);
             };
 
-            document.querySelector('#ichatbox-send').onclick = sendMessage;
+            const sendBtn = document.querySelector('#ichatbox-send');
+            if (sendBtn) sendBtn.onclick = sendMessage;
 
-            document.querySelector('#ichatbox-input').onkeypress = function (e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            };
+            const inputElem = document.querySelector('#ichatbox-input');
+            if (inputElem) {
+                inputElem.addEventListener('input', () => {
+                    inputElem.style.height = 'auto';
+                    inputElem.style.height = Math.min(inputElem.scrollHeight, 100) + 'px';
+                });
+                inputElem.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
         }
+
+        // Tùy biến màu sắc thương hiệu nếu có data-color hoặc options.themeColor
+        const customThemeColor = (options && options.themeColor) ||
+            (document.currentScript && document.currentScript.getAttribute('data-color')) ||
+            '';
+        if (customThemeColor) {
+            const colorStyle = document.createElement('style');
+            colorStyle.innerHTML = `
+                #ichatbox-header, #ichatbox-toggle, #ichatbox-send, #ichatbox-form-submit {
+                    background: ${customThemeColor} !important;
+                }
+                .ichatbox-msg-wrapper span[style*="linear-gradient"] {
+                    background: ${customThemeColor} !important;
+                }
+            `;
+            document.head.appendChild(colorStyle);
+        }
+
+        // Expose Client-Side JavaScript SDK trên window.IChatBox
+        window.IChatBox.open = openChatbox;
+        window.IChatBox.close = closeChatbox;
+        window.IChatBox.toggle = () => {
+            if (chatContainer.classList.contains('active')) closeChatbox();
+            else openChatbox();
+        };
+        window.IChatBox.show = () => {
+            chatContainer.style.display = 'flex';
+            toggleButton.style.display = 'flex';
+        };
+        window.IChatBox.hide = () => {
+            chatContainer.style.display = 'none';
+            toggleButton.style.display = 'none';
+            if (teaserPopup) teaserPopup.style.display = 'none';
+        };
+        window.IChatBox.identify = (userData) => {
+            if (userData && (userData.name || userData.contact || userData.email || userData.phone)) {
+                const name = userData.name || '';
+                const contact = userData.contact || userData.email || userData.phone || '';
+                saveVisitorInfo(name, contact);
+            }
+        };
+        window.IChatBox.sendMessage = (text) => {
+            const input = document.querySelector('#ichatbox-input');
+            if (input && text) {
+                input.value = text;
+                const send = document.querySelector('#ichatbox-send');
+                if (send) send.click();
+            }
+        };
+        window.IChatBox.on = (event, callback) => {
+            if (!eventListeners[event]) eventListeners[event] = [];
+            eventListeners[event].push(callback);
+        };
+        window.IChatBox.off = (event, callback) => {
+            if (eventListeners[event]) {
+                eventListeners[event] = eventListeners[event].filter(cb => cb !== callback);
+            }
+        };
+        window.IChatBox.reset = () => {
+            localStorage.removeItem('ichatbox_visitor_id');
+            localStorage.removeItem(visitorInfoStorageKey);
+            localStorage.removeItem(legacyVisitorInfoStorageKey);
+            location.reload();
+        };
     };
 
     if (document.readyState === 'loading') {

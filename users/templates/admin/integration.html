@@ -52,9 +52,42 @@
                         </button>
                     </div>
                     <p class="text-muted small mt-3 mb-0">
-                        Optional attributes: <code>data-username</code> (default guest name). Aliases supported: <code>data-license-key</code>, <code>data-api-key</code>.
+                        Thuộc tính tùy chọn trên thẻ script:
+                        <br>• <code>data-username</code>: Tên khách mặc định.
+                        <br>• <code>data-color</code>: Tùy biến mã màu thương hiệu (VD: <code>data-color="#0284c7"</code> hoặc <code>data-color="#10b981"</code>).
                     </p>
-                </div>
+
+                    <hr class="my-4">
+
+                    <h6 class="font-weight-bold text-dark mb-3"><i class="fa fa-terminal mr-2"></i>JavaScript SDK Client API (Dành cho Lập trình viên)</h6>
+                    <p class="text-muted small">
+                        Sau khi nhúng mã script, đối tượng <code>window.IChatBox</code> sẽ tự động sẵn sàng để bạn điều khiển qua JavaScript:
+                    </p>
+
+                    <div class="position-relative">
+                        <pre class="bg-dark text-light p-3 rounded small font-family-monospace" id="sdkSnippet" style="max-height: 280px; overflow-y: auto;">// 1. Mở hoặc đóng khung chat từ bất kỳ nút nào trên trang web:
+IChatBox.open();
+IChatBox.close();
+IChatBox.toggle();
+
+// 2. Định danh khách hàng khi họ đã đăng nhập tài khoản trên web của bạn:
+IChatBox.identify({
+  name: "Nguyễn Văn A",
+  email: "khachhang@gmail.com",
+  phone: "0901234567"
+});
+
+// 3. Tự động gửi một tin nhắn mẫu:
+IChatBox.sendMessage("Tôi cần tư vấn bảng giá");
+
+// 4. Lắng nghe các sự kiện (Analytics, Google Tag Manager):
+IChatBox.on('open', () => console.log('Khách vừa mở chatbox'));
+IChatBox.on('close', () => console.log('Khách vừa đóng chatbox'));
+IChatBox.on('message:received', (data) => console.log('Tin nhắn mới:', data));</pre>
+                        <button class="btn btn-sm btn-outline-light position-absolute" style="top: 10px; right: 10px;" onclick="copyTextById('sdkSnippet', this)">
+                            <i class="fa fa-copy mr-1"></i> Copy Code
+                        </button>
+                    </div>
             </div>
         </div>
     </div>
