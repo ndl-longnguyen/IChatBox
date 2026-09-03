@@ -7,10 +7,10 @@ IChatBox supports local AI auto-replies with an Ollama-compatible HTTP API.
 The web app reads these environment variables:
 
 - `AI_LOCAL_BASE_URL`: Ollama API URL, default `http://localhost:11434`
-- `AI_LOCAL_MODEL`: model name, default `llama3.2:3b`
-- `AI_LOCAL_TIMEOUT_SECONDS`: HTTP timeout for one reply
-- `AI_LOCAL_MAX_TOKENS`: maximum generated tokens for one reply
-- `AI_LOCAL_NUM_CTX`: local model context window
+- `AI_LOCAL_MODEL`: model name, default `qwen2.5:1.5b`
+- `AI_LOCAL_TIMEOUT_SECONDS`: HTTP timeout for one reply, default `30`
+- `AI_LOCAL_MAX_TOKENS`: maximum generated tokens for one reply, default `160`
+- `AI_LOCAL_NUM_CTX`: local model context window, default `1024`
 - `AI_KNOWLEDGE_CHUNK_SIZE`: character chunk size for training data
 - `AI_KNOWLEDGE_CHUNK_OVERLAP`: overlap between chunks
 - `AI_KNOWLEDGE_UPLOAD_MAX_BYTES`: maximum upload size for one knowledge file
@@ -19,7 +19,7 @@ With Docker Compose, the `ollama` service is behind the optional `ai` profile:
 
 ```bash
 docker compose --profile ai up -d
-docker compose exec ollama ollama pull llama3.2:3b
+docker compose exec ollama ollama pull qwen2.5:1.5b
 ```
 
 If auto-reply logs `timed out`, the model is reachable but did not finish within

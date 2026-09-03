@@ -24,7 +24,7 @@ Database in compose uses PostgreSQL (persistent volume `postgres_data`).
 To run local AI auto-replies with Ollama:
 ```bash
 docker compose --profile ai up -d
-docker compose exec ollama ollama pull llama3.2:3b
+docker compose exec ollama ollama pull qwen2.5:1.5b
 ```
 
 ## Run Without Docker (SQLite)

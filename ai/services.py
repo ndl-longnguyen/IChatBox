@@ -670,11 +670,11 @@ def build_structured_reply(visitor_message, chunks, ai_settings):
 def call_ollama(prompt, ai_settings):
     base_url = getattr(settings, "AI_LOCAL_BASE_URL", "http://localhost:11434")
     model_name = ai_settings.model_name or getattr(
-        settings, "AI_LOCAL_MODEL", "llama3.2:3b"
+        settings, "AI_LOCAL_MODEL", "qwen2.5:1.5b"
     )
-    timeout = getattr(settings, "AI_LOCAL_TIMEOUT_SECONDS", 20)
-    max_tokens = getattr(settings, "AI_LOCAL_MAX_TOKENS", 220)
-    num_ctx = getattr(settings, "AI_LOCAL_NUM_CTX", 4096)
+    timeout = getattr(settings, "AI_LOCAL_TIMEOUT_SECONDS", 30)
+    max_tokens = getattr(settings, "AI_LOCAL_MAX_TOKENS", 160)
+    num_ctx = getattr(settings, "AI_LOCAL_NUM_CTX", 1024)
     payload = {
         "model": model_name,
         "prompt": prompt,
@@ -682,7 +682,7 @@ def call_ollama(prompt, ai_settings):
         "options": {
             "temperature": ai_settings.temperature,
             "num_predict": max(32, int(max_tokens)),
-            "num_ctx": max(1024, int(num_ctx)),
+            "num_ctx": max(512, int(num_ctx)),
         },
     }
     request = urllib.request.Request(
